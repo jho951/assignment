@@ -107,6 +107,7 @@
 
 ## 결정 반영 현황
 
+- 구현 계획 문서: `prompts/plans/001-implementation-plan.md`
 - 공개 API 설계 문서: `docs/api/README.md`
 - 이미지 데이터 업로드 및 전달 형식: `docs/decisions/002-api-contract-and-image-input.md`
 - 작업 저장소와 큐 또는 비동기 실행 방식: `docs/decisions/003-persistence-and-async-execution.md`
