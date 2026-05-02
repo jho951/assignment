@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: assignment
+
+  datasource:
+    url: ${DB_URL:jdbc:h2:file:./data/assignment;MODE=PostgreSQL;DATABASE_TO_UPPER=false}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+worker:
+  base-url: ${WORKER_BASE_URL:http://localhost:9090}
+  issue-key-path: ${WORKER_ISSUE_KEY_PATH:/mock/auth/issue-key}
+  process-path: ${WORKER_PROCESS_PATH:/mock/process}
+  timeout-ms: ${WORKER_TIMEOUT_MS:5000}
+
+jobs:
+  max-attempts: ${JOB_MAX_ATTEMPTS:3}
+  poll-interval-ms: ${JOB_POLL_INTERVAL_MS:1000}
+  batch-size: ${JOB_BATCH_SIZE:10}
+  lease-timeout-ms: ${JOB_LEASE_TIMEOUT_MS:60000}
+  executor:
+    core-size: ${JOB_EXECUTOR_CORE_SIZE:2}
+    max-size: ${JOB_EXECUTOR_MAX_SIZE:4}
+    queue-capacity: ${JOB_EXECUTOR_QUEUE_CAPACITY:100}
