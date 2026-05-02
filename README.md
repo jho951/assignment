@@ -18,8 +18,9 @@
 
 - API 계약:
   - 작업 접수 API는 `POST /api/v1/image-jobs`를 사용합니다.
-  - 요청 형식은 `application/json`이며 이미지 입력은 `image.type`, `image.value` 구조를 사용합니다.
-  - `image.type`은 `URL`, `BASE64`만 허용하고 `multipart/form-data`는 제외합니다.
+  - 작업 상태 조회, 결과 조회, 목록 조회 API는 각각 `GET /api/v1/image-jobs/{jobId}`, `GET /api/v1/image-jobs/{jobId}/result`, `GET /api/v1/image-jobs`를 사용합니다.
+  - 요청 형식은 `application/json`이며 작업 생성 요청은 `imageUrl` 단일 필드를 사용합니다.
+  - `imageUrl`은 `http`, `https`만 허용하고 `multipart/form-data`와 BASE64 업로드는 제외합니다.
 - 저장소와 실행 방식:
   - 작업 메타데이터와 결과는 RDBMS에 저장합니다.
   - 별도 메시지 큐 없이 DB-backed queue와 scheduler 기반 비동기 실행을 사용합니다.
@@ -37,10 +38,29 @@
   - stale `PROCESSING` 작업은 `leasedUntil` 기준으로 복구합니다.
 - 외부 Worker 연동:
   - Mock Worker API Key는 코드에 하드코딩하지 않고 설정값과 런타임 메모리 캐시로만 관리합니다.
+  - 애플리케이션 startup 시 Worker API Key를 미리 발급하지 않고, 최초 job 처리 시 lazy하게 발급합니다.
   - 최초 호출 시 key를 발급하고, `401` 응답 시 key를 폐기한 뒤 1회 재발급 후 즉시 재시도합니다.
+  - timeout은 5초, 일반 재시도 상한은 3회이며 Worker 장애는 job 상태와 오류 코드로 표현합니다.
 - 결과 보존과 목록 조회:
   - terminal job 결과는 완료 시각 기준 7일 보존합니다.
   - 목록 조회 API는 `GET /api/v1/image-jobs`이며 `createdAt DESC`, `jobId DESC` 정렬, `page`, `size`, `status` 필터를 사용합니다.
+
+## 런타임 구성
+
+- 애플리케이션 이미지는 `Dockerfile`로 빌드합니다.
+- 로컬 실행 기본 구성은 `compose.yaml` 기준 `app + PostgreSQL`입니다.
+- Mock Worker는 저장소에 포함되지 않은 외부 제공 서비스로 가정합니다.
+- Mock Worker 주소는 `WORKER_BASE_URL` 환경 변수로 주입합니다.
+- Worker가 꺼져 있어도 애플리케이션은 기동되어야 하며, 실제 job 처리 시점에만 Worker 연결이 필요합니다.
+
+## 주요 환경 변수
+
+- `WORKER_BASE_URL`: 외부 Mock Worker base URL
+- `WORKER_CANDIDATE_NAME`: API Key 발급용 candidate name
+- `WORKER_CANDIDATE_EMAIL`: API Key 발급용 email
+- `SPRING_DATASOURCE_URL`: PostgreSQL 또는 로컬 DB 연결 주소
+- `SPRING_DATASOURCE_USERNAME`: DB 계정
+- `SPRING_DATASOURCE_PASSWORD`: DB 비밀번호
 
 세부 근거와 예외 규칙은 `docs/decisions/`의 ADR에 정리합니다.
 
@@ -56,6 +76,8 @@
   - `005-idempotency-and-duplicate-requests.md`
   - `006-result-retention-and-list-policy.md`
   - `007-processing-guarantee-and-api-key-lifecycle.md`
+  - `008-worker-integration-and-retry.md`
+  - `009-container-and-runtime-config.md`
 - 프롬프트: `prompts/`
 - 실행/장애 가이드: `docs/runbook/DEBUG.md`
 - API 문서 기준: `docs/api/README.md`

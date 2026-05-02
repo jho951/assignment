@@ -2,12 +2,14 @@
 
 이 프로젝트는 Spring Boot 기반 이미지 처리 작업 오케스트레이션 서버 과제입니다.
 코드를 바로 작성하지 말고, 먼저 요구사항과 기존 ADR을 기준으로 구현 계획을 세웁니다.
+공개 API가 필요한 작업이면 구현 전에 `docs/api/README.md`에 API 계약 초안을 먼저 문서화합니다.
 
 ## 반드시 먼저 읽을 문서
 
 - `docs/REQUIREMENTS.md`
 - `docs/decisions/`
 - `README.md`
+- `docs/api/README.md`
 - `AGENTS.md`
 - `build.gradle`
 
@@ -27,6 +29,7 @@
 아래 항목별로 지금 결정해야 할 것과 구현 중 검증할 것을 나눕니다.
 
 - 공개 API 설계
+- 공개 API를 Mock Worker 실제 계약과 어떻게 맞출지
 - 이미지 데이터 표현 방식
 - 작업 상태 모델
 - 상태 전이 규칙
@@ -37,11 +40,13 @@
 - 외부 Mock Worker 호출 방식
 - 처리 보장 모델
 - API Key 발급, 캐시, 재발급 수명주기
+- 앱 startup과 Worker 의존성을 분리하는 방식
 - timeout/retry/backoff 정책
 - 서버 재시작 시 복구 방식
 - 목록 조회의 정렬, 페이징, 필터링 정책
 - 테스트 전략
 - 컨테이너 실행 방식
+- 런타임 환경 변수와 외부 의존성 명시 방식
 
 ## 3. ADR 후보 식별
 
@@ -56,6 +61,7 @@
 - 처리 보장 모델
 - Mock Worker API Key 수명주기와 보안 관리
 - 컨테이너 실행 구성
+- Worker 장애 시에도 앱이 기동되어야 한다는 런타임 가정
 
 ## 4. 구현 계획
 
