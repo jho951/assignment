@@ -105,10 +105,15 @@
 - 트래픽 증가 시 병목 가능 지점
 - 외부 시스템과의 연동 방식 및 선택 이유
 
-## 미결정 항목
+## 결정 반영 현황
 
-- 이미지 데이터 업로드 및 전달 형식
-- 작업 저장소와 큐 또는 비동기 실행 방식
-- 상태 이름과 재시도 정책
-- 중복 요청 판별 키
-- 결과 보존 기간과 목록 조회 정책
+- 이미지 데이터 업로드 및 전달 형식: `docs/decisions/002-api-contract-and-image-input.md`
+- 작업 저장소와 큐 또는 비동기 실행 방식: `docs/decisions/003-persistence-and-async-execution.md`
+- 상태 이름, 허용/비허용 상태 전이, 재시도 정책: `docs/decisions/004-job-state-and-retry-policy.md`
+- 중복 요청 판별 키와 사용자 관찰 가능 동작: `docs/decisions/005-idempotency-and-duplicate-requests.md`
+- 결과 보존 기간과 목록 조회 정책: `docs/decisions/006-result-retention-and-list-policy.md`
+- 처리 보장 모델, 재시작 복구, API Key 수명주기: `docs/decisions/007-processing-guarantee-and-api-key-lifecycle.md`
+
+## 현재 미결정 항목
+
+- 없음. 남은 구현 세부와 운영 절차는 README, API 문서, 런북에서 구체화한다.
