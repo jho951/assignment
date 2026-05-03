@@ -15,9 +15,13 @@ Mock Worker는 외부에서 제공되는 서비스이며 지연, timeout, 5xx, �
 - Worker base URL은 `WORKER_BASE_URL` 환경 변수로 주입한다.
 - Worker API Key 발급에 필요한 candidate identity는 환경 변수 또는 설정으로 주입한다.
 - 애플리케이션 시작 시 Worker API Key를 강제로 발급받지 않는다.
-- Worker API Key는 실제 Worker 호출 시점에 `POST /mock/auth/issue-key`로 lazy issuance 한다.
+- Worker API Key는 실제 Worker 호출 시점에 lazy issuance 한다.
+- 기본 설정 기준 최종 발급 URL은 `https://dev.realteeth.ai/mock/auth/issue-key`다.
+- 구현에서는 `WORKER_BASE_URL` 뒤에 상대 path를 안전하게 append해서 최종 URL이 항상 `/mock/...`를 유지하도록 한다.
 - 발급받은 API Key는 애플리케이션 인스턴스 메모리에 캐시한다.
 - Worker 호출에는 항상 `X-API-KEY` 헤더를 포함한다.
+- 기본 설정 기준 최종 처리 URL은 `https://dev.realteeth.ai/mock/process`다.
+- 구현에서는 `WORKER_BASE_URL` 뒤에 상대 path `/process`, `/process/{jobId}`를 안전하게 append한다.
 - Worker HTTP 호출 timeout은 5초로 둔다.
 - timeout, 5xx, 429, 네트워크 오류는 재시도 대상이다.
 - `401`을 제외한 4xx는 기본적으로 즉시 실패 처리한다.
@@ -54,3 +58,4 @@ Mock Worker는 외부에서 제공되는 서비스이며 지연, timeout, 5xx, �
 - 향후 개선:
   - Worker가 idempotency token을 지원하면 외부 중복 실행 위험을 더 줄일 수 있다.
   - 다중 인스턴스 환경에서는 shared cache 또는 secret store로 key lifecycle을 통합할 수 있다.
+  - `WORKER_BASE_URL`에 `/mock`가 포함된 상태에서 path resolution이 잘못되면 `403` 또는 `404`가 날 수 있으므로 URL 조합 테스트를 유지한다.

@@ -47,6 +47,9 @@
 - 테스트 전략
 - 컨테이너 실행 방식
 - 런타임 환경 변수와 외부 의존성 명시 방식
+- 외부 Mock Worker OpenAPI 문서를 어떤 기준으로 참조할지
+- 우리 서버 공개 API용 Swagger를 노출할지와 노출 범위
+- `Dockerfile`, `compose.yaml`, `.env.example` 같은 제출 산출물 포함 여부
 
 ## 3. ADR 후보 식별
 
@@ -62,6 +65,8 @@
 - Mock Worker API Key 수명주기와 보안 관리
 - 컨테이너 실행 구성
 - Worker 장애 시에도 앱이 기동되어야 한다는 런타임 가정
+- Mock Worker OpenAPI 기준 사용 방식
+- 우리 서버 Swagger 노출 방식
 
 ## 4. 구현 계획
 

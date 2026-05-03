@@ -116,7 +116,10 @@
 - 결과 보존 기간과 목록 조회 정책: `docs/decisions/006-result-retention-and-list-policy.md`
 - 처리 보장 모델, 재시작 복구, API Key 수명주기: `docs/decisions/007-processing-guarantee-and-api-key-lifecycle.md`
 - Worker 연동, timeout/retry, lazy API Key issuance: `docs/decisions/008-worker-integration-and-retry.md`
+  - `WORKER_BASE_URL`과 Worker path가 합쳐질 때 최종 URL이 `.../mock/...`로 유지되도록 구현한다.
 - 컨테이너 실행 방식과 런타임 구성: `docs/decisions/009-container-and-runtime-config.md`
+  - 구현 산출물: `Dockerfile`, `compose.yaml`, `.env.example`
+- 우리 서버 공개 API Swagger 노출과 Mock Worker 외부 OpenAPI 참조 방식: `docs/decisions/010-openapi-and-swagger-ui.md`
 
 ## 현재 미결정 항목
 

@@ -11,6 +11,7 @@
 - `007-processing-guarantee-and-api-key-lifecycle.md`
 - `008-worker-integration-and-retry.md`
 - `009-container-and-runtime-config.md`
+- `010-openapi-and-swagger-ui.md`
 
 ## 연계 문서
 

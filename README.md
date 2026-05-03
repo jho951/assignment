@@ -4,6 +4,7 @@
 
 - 테스트 실행: `./gradlew test`
 - 로컬 실행: `./gradlew bootRun`
+- 컨테이너 실행: `docker compose up --build`
 
 ## 프로젝트 성격
 
@@ -52,6 +53,34 @@
 - Mock Worker는 저장소에 포함되지 않은 외부 제공 서비스로 가정합니다.
 - Mock Worker 주소는 `WORKER_BASE_URL` 환경 변수로 주입합니다.
 - Worker가 꺼져 있어도 애플리케이션은 기동되어야 하며, 실제 job 처리 시점에만 Worker 연결이 필요합니다.
+- 기본 Worker base URL은 `https://dev.realteeth.ai/mock`입니다.
+
+## 실행 방법
+
+### 로컬 JVM 실행
+
+- 기본 포트: `8080`
+- 기본 로컬 DB: `jdbc:h2:file:./data/assignment`
+- 실행 명령:
+  - `./gradlew bootRun`
+
+### 컨테이너 실행
+
+- 시작:
+  - `docker compose up --build`
+- 중지:
+  - `docker compose down`
+- 데이터까지 정리:
+  - `docker compose down -v`
+- 서비스 포트:
+  - 앱: `localhost:8080`
+  - PostgreSQL: `localhost:5432`
+- compose 기본 DB 접속 정보:
+  - database: `assignment`
+  - username: `assignment`
+  - password: `assignment`
+- Mock Worker는 compose에 포함되지 않습니다.
+- `.env.example`을 참고해 `.env`를 만들면 Worker 관련 환경 변수를 쉽게 덮어쓸 수 있습니다.
 
 ## 주요 환경 변수
 
@@ -61,6 +90,26 @@
 - `SPRING_DATASOURCE_URL`: PostgreSQL 또는 로컬 DB 연결 주소
 - `SPRING_DATASOURCE_USERNAME`: DB 계정
 - `SPRING_DATASOURCE_PASSWORD`: DB 비밀번호
+
+## Mock Worker 참조 문서
+
+- Base URL: `https://dev.realteeth.ai/mock`
+- Swagger UI: `https://dev.realteeth.ai/mock/docs`
+- OpenAPI JSON: `https://dev.realteeth.ai/mock/openapi.json`
+- 우리 서버는 위 Mock Worker 문서를 기준으로 내부 연동합니다.
+
+## 우리 서버 Swagger
+
+- 공개 API 테스트용 OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+- 공개 API 테스트용 Swagger UI: `http://localhost:8080/swagger-ui.html`
+- 이 Swagger는 `POST /api/v1/image-jobs`, `GET /api/v1/image-jobs/{jobId}`, `GET /api/v1/image-jobs/{jobId}/result`, `GET /api/v1/image-jobs` 같은 우리 서버 공개 API를 테스트하기 위한 것입니다.
+- Mock Worker Swagger와는 별개이며, Worker 스펙 확인은 계속 `https://dev.realteeth.ai/mock/docs`를 사용합니다.
+
+## 검증 범위
+
+- `./gradlew test`는 현재 통과합니다.
+- 실제 Mock Worker live 호출은 외부 서비스 상태와 네트워크에 영향을 받습니다.
+- Worker가 꺼져 있어도 앱 기동과 공개 API 테스트는 가능합니다.
 
 세부 근거와 예외 규칙은 `docs/decisions/`의 ADR에 정리합니다.
 

@@ -15,6 +15,7 @@ Mock Worker는 현재 저장소에 구현체가 포함되지 않으므로 외부
 - 애플리케이션 이미지는 `Dockerfile`로 빌드한다.
 - 로컬 다중 컨테이너 실행은 `compose.yaml`로 관리한다.
 - compose 구성은 최소 `app + PostgreSQL`을 포함한다.
+- 저장소에는 예제 환경 변수 파일 `.env.example`를 포함한다.
 - Mock Worker는 compose 내부 서비스가 아니라 외부 서비스로 본다.
 - Mock Worker 주소는 `WORKER_BASE_URL` 환경 변수로 주입한다.
 - 평가자는 별도 유료 계정 없이 애플리케이션과 PostgreSQL을 실행할 수 있어야 한다.
@@ -24,6 +25,7 @@ Mock Worker는 현재 저장소에 구현체가 포함되지 않으므로 외부
 ## 이유
 
 - `Dockerfile + compose.yaml` 조합은 평가자가 가장 쉽게 재현할 수 있는 배포 단위다.
+- `.env.example`를 함께 두면 평가자가 필요한 Worker 설정을 빠르게 맞출 수 있다.
 - PostgreSQL을 명시적으로 compose에 포함하면 런타임 차이를 줄일 수 있다.
 - Mock Worker를 외부 서비스로 분리하면 저장소 범위를 과제 요구사항과 일치시킬 수 있다.
 

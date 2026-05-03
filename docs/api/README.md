@@ -30,6 +30,8 @@
 - Base path: `/api/v1/image-jobs`
 - Content-Type: `application/json`
 - Accept: `application/json`
+- 공개 API OpenAPI JSON endpoint: `/v3/api-docs`
+- 공개 API Swagger UI endpoint: `/swagger-ui.html`
 - 시간 필드는 RFC 3339 UTC 문자열을 사용한다.
 - `imageUrl`은 `http` 또는 `https` URL만 허용한다.
 - 인증/권한 모델은 과제 범위에서 제외한다.
@@ -214,7 +216,11 @@
 ## 외부 Worker와의 관계
 
 - 공개 API는 internal status와 retry 정책을 숨기지 않고 그대로 노출한다.
-- Worker 시작 요청은 내부에서 `POST /mock/process`로 변환한다.
+- 우리 서버 공개 API 테스트는 `/swagger-ui.html`과 `/v3/api-docs`를 사용한다.
+- Worker base URL은 `https://dev.realteeth.ai/mock`를 기준으로 한다.
+- Worker 참조 문서는 `https://dev.realteeth.ai/mock/docs`, `https://dev.realteeth.ai/mock/openapi.json`를 사용한다.
+- Worker API Key 발급은 내부에서 `POST /auth/issue-key`로 호출하며, 기본 설정 기준 최종 URL은 `https://dev.realteeth.ai/mock/auth/issue-key`다.
+- Worker 시작 요청은 내부에서 `POST /process`로 변환한다.
 - Worker는 `imageUrl`만 지원하므로 공개 API도 동일하게 URL 입력만 허용한다.
 - Worker 처리 상태 조회와 재시도는 서버 내부 scheduler와 processor가 담당한다.
 - Worker API Key는 애플리케이션 startup 시 미리 발급하지 않고, 실제 job 처리 시 lazy issuance 한다.
