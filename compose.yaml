@@ -1,0 +1,37 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: assignment
+      POSTGRES_USER: assignment
+      POSTGRES_PASSWORD: assignment
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U assignment -d assignment"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/assignment
+      SPRING_DATASOURCE_USERNAME: assignment
+      SPRING_DATASOURCE_PASSWORD: assignment
+      WORKER_BASE_URL: ${WORKER_BASE_URL:-https://dev.realteeth.ai/mock}
+      WORKER_CANDIDATE_NAME: ${WORKER_CANDIDATE_NAME:-assignment}
+      WORKER_CANDIDATE_EMAIL: ${WORKER_CANDIDATE_EMAIL:-assignment@example.com}
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:

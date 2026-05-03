@@ -1,0 +1,12 @@
+.git
+.github
+.gradle
+.idea
+build
+data
+logs
+.env
+*.log
+*.mv.db
+*.trace.db
+*.h2.db
