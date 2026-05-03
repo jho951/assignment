@@ -3,9 +3,9 @@ spring:
     name: assignment
 
   datasource:
-    url: ${DB_URL:jdbc:h2:file:./data/assignment;MODE=PostgreSQL;DATABASE_TO_UPPER=false}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:file:./data/assignment;MODE=PostgreSQL;DATABASE_TO_UPPER=false}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
 
   jpa:
     open-in-view: false
@@ -24,17 +24,27 @@ management:
       exposure:
         include: health,info
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 worker:
-  base-url: ${WORKER_BASE_URL:http://localhost:9090}
-  issue-key-path: ${WORKER_ISSUE_KEY_PATH:/mock/auth/issue-key}
-  process-path: ${WORKER_PROCESS_PATH:/mock/process}
+  base-url: ${WORKER_BASE_URL:https://dev.realteeth.ai/mock}
+  issue-key-path: ${WORKER_ISSUE_KEY_PATH:/auth/issue-key}
+  process-path: ${WORKER_PROCESS_PATH:/process}
   timeout-ms: ${WORKER_TIMEOUT_MS:5000}
+  candidate-name: ${WORKER_CANDIDATE_NAME:assignment}
+  candidate-email: ${WORKER_CANDIDATE_EMAIL:assignment@example.com}
 
 jobs:
   max-attempts: ${JOB_MAX_ATTEMPTS:3}
   poll-interval-ms: ${JOB_POLL_INTERVAL_MS:1000}
   batch-size: ${JOB_BATCH_SIZE:10}
   lease-timeout-ms: ${JOB_LEASE_TIMEOUT_MS:60000}
+  cleanup-interval-ms: ${JOB_CLEANUP_INTERVAL_MS:60000}
+  scheduling-enabled: ${JOB_SCHEDULING_ENABLED:true}
   executor:
     core-size: ${JOB_EXECUTOR_CORE_SIZE:2}
     max-size: ${JOB_EXECUTOR_MAX_SIZE:4}
