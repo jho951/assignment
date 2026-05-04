@@ -32,11 +32,11 @@ springdoc:
 
 worker:
   base-url: ${WORKER_BASE_URL:https://dev.realteeth.ai/mock}
-  issue-key-path: ${WORKER_ISSUE_KEY_PATH:/auth/issue-key}
+  issue-key-path: ${WORKER_ISSUE_KEY_PATH:mock_2e80116bf37a4505aac959068b5ca051}
   process-path: ${WORKER_PROCESS_PATH:/process}
   timeout-ms: ${WORKER_TIMEOUT_MS:5000}
-  candidate-name: ${WORKER_CANDIDATE_NAME:assignment}
-  candidate-email: ${WORKER_CANDIDATE_EMAIL:assignment@example.com}
+  candidate-name: ${WORKER_CANDIDATE_NAME:이장호}
+  candidate-email: ${WORKER_CANDIDATE_EMAIL:jho951@naver.com}
 
 jobs:
   max-attempts: ${JOB_MAX_ATTEMPTS:3}
