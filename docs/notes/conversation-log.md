@@ -1284,3 +1284,111 @@ imageUrl를 받을 때 https://없이 보내면  앞에 https://를 붙이는 �
 ## 유지 규칙
 
 - 이후 대화는 같은 파일 `docs/notes/conversation-log.md`에 turn 단위로 이어서 추가한다.
+
+### Turn 24
+
+**User**
+
+```text
+kotlin으로 마이그레이션 할려고 하는데 우려되는 문제점이 있을까?
+```
+
+**Assistant Update**
+
+```text
+현재 코드베이스의 언어/프레임워크 구성을 먼저 확인한 뒤, Kotlin 마이그레이션 시 실제로 문제가 될 지점을 기준으로 우려사항을 정리하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+현재는 Java/Spring Boot 단일 모듈 구조로 보입니다. 다음은 `build.gradle`, Lombok 사용 범위, 설정 바인딩/엔티티 형태를 확인해서 Kotlin 전환 시 충돌 가능성이 큰 부분을 좁히겠습니다.
+```
+
+**Assistant Update**
+
+```text
+JPA 엔티티와 `@ConfigurationProperties`는 이미 확인했습니다. 이제 Spring 프록시, 트랜잭션, 테스트 스타일을 확인해서 Kotlin의 `final` 기본값이나 null-safety가 실제로 어디에 영향을 주는지 보겠습니다.
+```
+
+**Assistant Update**
+
+```text
+프록시와 트랜잭션 쪽은 Kotlin 전용 플러그인 없이는 바로 충돌할 가능성이 높습니다. 마지막으로 DTO/테스트가 Java record와 null 허용 규칙에 얼마나 기대고 있는지 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+테스트 쪽도 중요한 리스크가 있습니다. 특히 현재 Mockito 설정이면 Kotlin의 `final` 기본값 때문에 단위 테스트가 바로 깨질 수 있어서, 어떤 타입을 목킹하는지 확인하고 있습니다.
+```
+
+**Assistant Update**
+
+```text
+질문 답변 자체는 정리됐고, 저장소 운영 규칙에 맞춰 이번 대화 요지도 대화 로그에 남기겠습니다. 로그 형식을 먼저 확인한 뒤 한 줄로 추가하겠습니다.
+```
+
+**Assistant**
+
+```text
+있습니다. 다만 이 저장소는 규모가 작아서 `점진적 마이그레이션`으로 가면 충분히 관리 가능합니다. 실제 우려 포인트는 언어 문법보다 `Spring/JPA/테스트 도구` 쪽입니다.
+
+가장 큰 리스크는 `Spring 프록시 + JPA 엔티티`입니다. 현재 [build.gradle](/Users/jhons/Downloads/assignment/build.gradle:1)은 Kotlin 관련 플러그인이 전혀 없고, 서비스/설정 클래스는 [ApplicationCoreConfiguration.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/config/ApplicationCoreConfiguration.java:14), [ImageJobQueryService.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/job/service/ImageJobQueryService.java:25)처럼 Spring 프록시에 기대고 있습니다. Kotlin으로 바꾸면 클래스가 `final`이라 `kotlin-spring` 없이는 `@Configuration`, `@Transactional`, `@Service` 프록시가 깨질 수 있습니다. JPA 엔티티인 [ImageJob.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/job/domain/ImageJob.java:23)도 `no-arg/open` 처리가 필요하고, 이 클래스는 mutable 필드가 많아서 `data class`로 옮기면 `equals/hashCode/copy` 의미가 꼬일 가능성이 큽니다. 이 엔티티는 Kotlin으로 바꾸더라도 일반 클래스로 두는 편이 안전합니다.
+
+두 번째는 `nullability 계약 변화`입니다. 현재 컨트롤러는 [ImageJobController.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/job/web/ImageJobController.java:33)에서 `Idempotency-Key`와 `status`를 nullable로 받는 전제를 두고 있고, 응답 DTO도 [ImageJobStatusResponse.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/job/web/dto/ImageJobStatusResponse.java:5), [ImageJobResultResponse.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/job/web/dto/ImageJobResultResponse.java:5)처럼 `completedAt`, `expiresAt`, `error`, `result`가 상황에 따라 비어 있을 수 있습니다. Kotlin에서 이걸 잘못 `non-null`로 선언하면 지금은 비즈니스 예외로 처리되는 흐름이 프레임워크 단계의 `400/500`으로 바뀔 수 있습니다.
+
+세 번째는 `테스트 깨짐`입니다. 현재 Mockito 테스트는 인터페이스뿐 아니라 [ImageJobCommandServiceTests.java](/Users/jhons/Downloads/assignment/src/test/java/io/github/jho951/assignment/job/service/ImageJobCommandServiceTests.java:39)의 `RequestHashService`, [JobProcessingSchedulerTests.java](/Users/jhons/Downloads/assignment/src/test/java/io/github/jho951/assignment/job/processing/JobProcessingSchedulerTests.java:22)의 `JobProcessor` 같은 구체 클래스를 바로 mock 합니다. Kotlin 기본 설정이면 이런 클래스들이 final이라 현재 Mockito 구성 그대로는 실패할 가능성이 큽니다. `mockito-inline`을 추가하거나 `MockK`로 옮길지 먼저 정해야 합니다.
+
+마지막은 `빌드/런타임 의존성`입니다. 지금은 Lombok과 Java record를 적극 쓰고 있고 [JobProperties.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/config/JobProperties.java:5), [RequestHashService.java](/Users/jhons/Downloads/assignment/src/main/java/io/github/jho951/assignment/job/service/RequestHashService.java:9)처럼 Java 스타일이 전반에 깔려 있습니다. Kotlin 전환 시 최소한 `org.jetbrains.kotlin.jvm`, `kotlin-spring`, `kotlin-jpa`, `kotlin-reflect`, `jackson-module-kotlin`을 넣고, Lombok 제거와 record -> data class 변환을 한 번에 하지 않는 게 안전합니다.
+
+추천 순서는 이렇습니다.
+1. Kotlin 플러그인과 런타임 의존성만 먼저 추가합니다.
+2. DTO, `ConfigurationProperties`, 순수 서비스부터 Kotlin으로 옮깁니다.
+3. 테스트에서 `Mockito final class` 문제를 먼저 해결합니다.
+4. `ImageJob` 같은 JPA 엔티티는 마지막에, `data class`가 아닌 일반 Kotlin 클래스로 옮깁니다.
+
+원하면 다음 단계로 바로 `이 저장소 기준 Kotlin 마이그레이션 체크리스트`를 파일 단위로 쪼개서 드리겠습니다.
+```
+
+### Turn 25
+
+**User**
+
+```text
+요구사항에 문제가 없게 마이그레이션할려면 고려할점 과 함께 파일 단위 Kotlin 마이그레이션 체크리스트를 만들어줘
+```
+
+**Assistant Update**
+
+```text
+요구사항을 깨지 않는 Kotlin 마이그레이션 관점으로 체크리스트를 문서화하겠습니다. 먼저 현재 요구사항/ADR/계획 문서에 어디까지 반영돼 있는지 확인한 뒤, 저장소 규칙에 맞게 관련 문서를 함께 갱신하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+문서 구조는 확인했습니다. 이제 `요구사항 보호 관점`, `기술 결정`, `실행 순서`, `디버깅 포인트`를 각각 문서에 나눠 넣겠습니다. ADR은 Kotlin 마이그레이션 가드레일로 새로 추가하고, 구현 계획에는 파일 단위 체크리스트를 붙이겠습니다.
+```
+
+**Assistant Update**
+
+```text
+문서 편집을 시작합니다. 요구사항 문서에는 마이그레이션 가드레일을 추가하고, ADR과 계획 문서에는 실제 순서와 파일 단위 체크리스트를 넣겠습니다.
+```
+
+**Assistant Update**
+
+```text
+가드레일과 체크리스트 문서는 넣었습니다. 이제 표현과 연결이 어색한 부분이 없는지 확인하고, 마지막으로 대화 로그까지 반영하겠습니다.
+```
+
+**Assistant**
+
+```text
+요구사항을 깨지 않는 Kotlin 마이그레이션 기준을 문서로 정리했습니다. 핵심 기준은 [docs/REQUIREMENTS.md](/Users/jhons/Downloads/assignment/docs/REQUIREMENTS.md)에 추가했고, 기술 결정은 [docs/decisions/014-kotlin-migration-strategy-and-guardrails.md](/Users/jhons/Downloads/assignment/docs/decisions/014-kotlin-migration-strategy-and-guardrails.md)에 ADR로 기록했습니다. 파일 단위 체크리스트는 [prompts/plans/002-kotlin-migration-plan.md](/Users/jhons/Downloads/assignment/prompts/plans/002-kotlin-migration-plan.md)에 만들었고, Kotlin 전환 시 자주 깨지는 지점은 [docs/runbook/DEBUG.md](/Users/jhons/Downloads/assignment/docs/runbook/DEBUG.md)에 점검 절차를 추가했습니다.
+
+우선순위는 `build/plugin -> DTO/properties/service -> controller/worker/processing -> entity/repository 마지막`입니다. 요구사항 관점에서 특히 주의할 점은 네 가지입니다. 첫째, `API/JSON/error/status` contract를 절대 바꾸지 않는 것. 둘째, Spring/JPA용 Kotlin plugin 없이 bean/entity를 먼저 옮기지 않는 것. 셋째, nullable 계약과 `@field:` validation target을 정확히 옮기는 것. 넷째, 현재 Mockito가 concrete class mocking을 일부 사용하므로 final class 대응 전략 없이 테스트를 한꺼번에 옮기지 않는 것입니다.
+
+체크리스트는 `build.gradle`, `gradle.properties`, `settings.gradle`부터 시작해서 config, DTO, service, worker, processing, domain, repository, test 파일까지 파일별 확인 항목으로 쪼개 두었습니다. 이번 작업은 문서화만 수행했고 테스트나 코드 마이그레이션은 아직 실행하지 않았습니다.
+```

@@ -76,6 +76,15 @@
 3. XML 요약은 `build/reports/jacoco/test/jacocoTestReport.xml`에서 확인한다.
 4. service, processor, scheduler, configuration 경계의 미커버 분기를 우선 보강한다.
 
+### Kotlin 마이그레이션 점검
+
+1. Kotlin plugin/dependency 추가 직후 `./gradlew test`를 실행해 mixed Java/Kotlin compile 이 깨지지 않는지 확인한다.
+2. Spring bean 생성 오류나 CGLIB proxy 오류가 나면 Kotlin Spring plugin 적용 여부와 final class 여부를 확인한다.
+3. JPA entity instantiation 오류가 나면 Kotlin JPA plugin, no-arg/open 처리, entity constructor visibility 를 확인한다.
+4. 요청 바인딩에서 `400` 또는 `MissingKotlinParameterException`이 나면 `jackson-module-kotlin`, nullable type 선언, DTO validation annotation target(`@field:`)을 확인한다.
+5. Mockito 가 Kotlin concrete class 를 mock 하지 못하면 final class 대응 전략 적용 여부를 확인하거나 interface mocking 으로 되돌린다.
+6. 마이그레이션 배치가 끝날 때마다 `./gradlew test jacocoTestReport`를 다시 실행하고 controller/service/processor/worker regression 을 확인한다.
+
 ## 확인할 로그
 
 - Worker API Key lazy issuance 시도

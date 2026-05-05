@@ -108,6 +108,20 @@
   - 컨테이너 환경에서 재현 가능하게 실행되어야 한다.
   - 디버깅 절차와 실행 방법이 문서화되어야 한다.
 
+## Kotlin 마이그레이션 가드레일
+
+- Java 구현을 Kotlin으로 옮기더라도 공개 API contract는 유지해야 한다.
+- endpoint path, HTTP status, JSON field 이름, 상태 이름, error code, pagination/filter semantics 는 변경하면 안 된다.
+- `Idempotency-Key` trim/검증/replay/conflict 규칙과 같은 사용자 관찰 가능 동작은 그대로 유지해야 한다.
+- Worker API key lazy issuance, `401` refresh retry, timeout/backoff, single-step `PROCESSING` continuation, stale recovery semantics 는 변경하면 안 된다.
+- DB table/column/index/constraint 이름과 optimistic lock, lease, expiry 관련 저장 semantics 는 유지해야 한다.
+- Kotlin 전환은 big-bang 이 아니라 Java/Kotlin 혼합 상태를 허용하는 점진적 순서로 진행해야 한다.
+- Spring proxy 와 JPA 동작을 위해 Kotlin build/runtime 설정에서 `spring`, `jpa`, reflection, Jackson Kotlin module 호환성을 보장해야 한다.
+- Kotlin nullability 선언은 현재 nullable header/query param, nullable response field, nullable persistence field의 의미를 그대로 반영해야 한다.
+- JPA entity 는 기본적으로 `data class`로 바꾸지 않고 일반 Kotlin class 로 유지해야 한다.
+- 기존 Mockito 테스트가 concrete class mocking 에 의존하는 지점을 먼저 점검하고, final class 대응 전략 없이 한꺼번에 변환하지 않아야 한다.
+- 각 마이그레이션 배치마다 `./gradlew test jacocoTestReport` 기준을 유지하고 문서와 런북을 함께 갱신해야 한다.
+
 ## 설계 설명 문서 필수 항목
 
 - 상태 모델 설계 의도
@@ -134,10 +148,11 @@
 - 반복 생성자/접근자 축소를 위한 Lombok 사용 범위: `docs/decisions/011-lombok-for-boilerplate-reduction.md`
 - single-step `PROCESSING` continuation, interrupt 복구, `attemptCount` 의미: `docs/decisions/012-processing-attempt-deadline-and-interrupt-recovery.md`
 - coverage report 생성 방식과 테스트 우선순위: `docs/decisions/013-coverage-reporting-and-test-focus.md`
+- Kotlin 점진 마이그레이션 순서와 요구사항 보호 가드레일: `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`
 
 ## 현재 미결정 항목
 
-- 없음. 남은 구현 세부와 운영 절차는 README, API 문서, 런북에서 구체화한다.
+- 없음. Kotlin 마이그레이션이 필요하면 `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`와 `prompts/plans/002-kotlin-migration-plan.md`를 따른다.
 
 ## 대화 기록
 

@@ -15,6 +15,7 @@
 - `011-lombok-for-boilerplate-reduction.md`
 - `012-processing-attempt-deadline-and-interrupt-recovery.md`
 - `013-coverage-reporting-and-test-focus.md`
+- `014-kotlin-migration-strategy-and-guardrails.md`
 
 ## 연계 문서
 
