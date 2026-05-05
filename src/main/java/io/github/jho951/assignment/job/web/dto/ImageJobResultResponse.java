@@ -9,5 +9,4 @@ public record ImageJobResultResponse(
         Instant completedAt,
         Instant expiresAt,
         ImageJobErrorResponse error
-) {
-}
+) {}

@@ -14,24 +14,16 @@ import io.github.jho951.assignment.config.JobProperties;
 import io.github.jho951.assignment.job.domain.ImageJob;
 import io.github.jho951.assignment.job.domain.JobStatus;
 import io.github.jho951.assignment.job.repository.ImageJobRepository;
+import lombok.RequiredArgsConstructor;
 
 @Component
 @ConditionalOnProperty(name = "jobs.scheduling-enabled", havingValue = "true", matchIfMissing = true)
+@RequiredArgsConstructor
 public class JobCleanupScheduler {
 
     private final ImageJobRepository imageJobRepository;
     private final JobProperties jobProperties;
     private final Clock clock;
-
-    public JobCleanupScheduler(
-            ImageJobRepository imageJobRepository,
-            JobProperties jobProperties,
-            Clock clock
-    ) {
-        this.imageJobRepository = imageJobRepository;
-        this.jobProperties = jobProperties;
-        this.clock = clock;
-    }
 
     @Transactional
     @Scheduled(fixedDelayString = "${jobs.cleanup-interval-ms}")

@@ -12,5 +12,4 @@ public record ImageJobSummaryResponse(
         Instant completedAt,
         Instant expiresAt,
         ImageJobErrorResponse error
-) {
-}
+) {}

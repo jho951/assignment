@@ -18,22 +18,17 @@ import io.github.jho951.assignment.job.web.dto.ImageJobCreateResponse;
 import io.github.jho951.assignment.job.web.dto.ImageJobListResponse;
 import io.github.jho951.assignment.job.web.dto.ImageJobResultResponse;
 import io.github.jho951.assignment.job.web.dto.ImageJobStatusResponse;
+
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/image-jobs")
+@RequiredArgsConstructor
 public class ImageJobController {
 
-    private final ImageJobCommandService imageJobCommandService;
     private final ImageJobQueryService imageJobQueryService;
-
-    public ImageJobController(
-            ImageJobCommandService imageJobCommandService,
-            ImageJobQueryService imageJobQueryService
-    ) {
-        this.imageJobCommandService = imageJobCommandService;
-        this.imageJobQueryService = imageJobQueryService;
-    }
+    private final ImageJobCommandService imageJobCommandService;
 
     @PostMapping
     public ResponseEntity<ImageJobCreateResponse> createJob(

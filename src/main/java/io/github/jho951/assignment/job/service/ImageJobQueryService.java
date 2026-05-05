@@ -20,9 +20,11 @@ import io.github.jho951.assignment.job.web.dto.ImageJobListResponse;
 import io.github.jho951.assignment.job.web.dto.ImageJobResultResponse;
 import io.github.jho951.assignment.job.web.dto.ImageJobStatusResponse;
 import io.github.jho951.assignment.job.web.dto.ImageJobSummaryResponse;
+import lombok.RequiredArgsConstructor;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ImageJobQueryService {
 
     private static final Sort DEFAULT_SORT = Sort.by(
@@ -31,10 +33,6 @@ public class ImageJobQueryService {
     );
 
     private final ImageJobRepository imageJobRepository;
-
-    public ImageJobQueryService(ImageJobRepository imageJobRepository) {
-        this.imageJobRepository = imageJobRepository;
-    }
 
     public ImageJobStatusResponse getJobStatus(String jobId) {
         ImageJob imageJob = findJob(jobId);

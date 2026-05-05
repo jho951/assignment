@@ -8,5 +8,4 @@ public record ImageJobListResponse(
         long totalElements,
         int totalPages,
         List<ImageJobSummaryResponse> items
-) {
-}
+) {}

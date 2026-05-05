@@ -6,23 +6,16 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import lombok.RequiredArgsConstructor;
+
 @Component
 @ConditionalOnProperty(name = "jobs.scheduling-enabled", havingValue = "true", matchIfMissing = true)
+@RequiredArgsConstructor
 public class JobProcessingScheduler {
 
     private final JobProcessor jobProcessor;
     private final JobRecoveryService jobRecoveryService;
     private final Executor jobTaskExecutor;
-
-    public JobProcessingScheduler(
-            JobProcessor jobProcessor,
-            JobRecoveryService jobRecoveryService,
-            Executor jobTaskExecutor
-    ) {
-        this.jobProcessor = jobProcessor;
-        this.jobRecoveryService = jobRecoveryService;
-        this.jobTaskExecutor = jobTaskExecutor;
-    }
 
     @Scheduled(fixedDelayString = "${jobs.poll-interval-ms}")
     public void processDueJobs() {

@@ -15,8 +15,14 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "image_jobs",
         indexes = {
@@ -56,26 +62,34 @@ public class ImageJob {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 32)
+    @Setter
     private JobStatus status;
 
     @Column(length = 128)
+    @Setter
     private String externalJobId;
 
     @Column(length = 2048)
+    @Setter
     private String result;
 
     @Column(length = 64)
+    @Setter
     private String errorCode;
 
     @Column(length = 512)
+    @Setter
     private String errorMessage;
 
     @Column(nullable = false)
+    @Setter
     private int attemptCount;
 
     @Column(nullable = false)
+    @Setter
     private Instant nextAttemptAt;
 
+    @Setter
     private Instant leaseUntil;
 
     @Column(nullable = false, updatable = false)
@@ -84,12 +98,11 @@ public class ImageJob {
     @Column(nullable = false)
     private Instant updatedAt;
 
+    @Setter
     private Instant completedAt;
 
+    @Setter
     private Instant expiresAt;
-
-    protected ImageJob() {
-    }
 
     public static ImageJob queued(
             String jobId,
@@ -126,121 +139,5 @@ public class ImageJob {
 
     public boolean isTerminal() {
         return status.isTerminal();
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public Long getVersion() {
-        return version;
-    }
-
-    public String getJobId() {
-        return jobId;
-    }
-
-    public String getIdempotencyKey() {
-        return idempotencyKey;
-    }
-
-    public String getRequestHash() {
-        return requestHash;
-    }
-
-    public ImageInputType getImageInputType() {
-        return imageInputType;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public JobStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(JobStatus status) {
-        this.status = status;
-    }
-
-    public String getExternalJobId() {
-        return externalJobId;
-    }
-
-    public void setExternalJobId(String externalJobId) {
-        this.externalJobId = externalJobId;
-    }
-
-    public String getResult() {
-        return result;
-    }
-
-    public void setResult(String result) {
-        this.result = result;
-    }
-
-    public String getErrorCode() {
-        return errorCode;
-    }
-
-    public void setErrorCode(String errorCode) {
-        this.errorCode = errorCode;
-    }
-
-    public String getErrorMessage() {
-        return errorMessage;
-    }
-
-    public void setErrorMessage(String errorMessage) {
-        this.errorMessage = errorMessage;
-    }
-
-    public int getAttemptCount() {
-        return attemptCount;
-    }
-
-    public void setAttemptCount(int attemptCount) {
-        this.attemptCount = attemptCount;
-    }
-
-    public Instant getNextAttemptAt() {
-        return nextAttemptAt;
-    }
-
-    public void setNextAttemptAt(Instant nextAttemptAt) {
-        this.nextAttemptAt = nextAttemptAt;
-    }
-
-    public Instant getLeaseUntil() {
-        return leaseUntil;
-    }
-
-    public void setLeaseUntil(Instant leaseUntil) {
-        this.leaseUntil = leaseUntil;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public Instant getCompletedAt() {
-        return completedAt;
-    }
-
-    public void setCompletedAt(Instant completedAt) {
-        this.completedAt = completedAt;
-    }
-
-    public Instant getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(Instant expiresAt) {
-        this.expiresAt = expiresAt;
     }
 }

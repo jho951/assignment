@@ -1,7 +1,9 @@
 package io.github.jho951.assignment.job.worker;
 
 import io.github.jho951.assignment.job.domain.JobFailureCode;
+import lombok.Getter;
 
+@Getter
 public class WorkerClientException extends RuntimeException {
 
     private final JobFailureCode failureCode;
@@ -17,13 +19,5 @@ public class WorkerClientException extends RuntimeException {
         super(message);
         this.failureCode = failureCode;
         this.retryable = retryable;
-    }
-
-    public JobFailureCode getFailureCode() {
-        return failureCode;
-    }
-
-    public boolean isRetryable() {
-        return retryable;
     }
 }

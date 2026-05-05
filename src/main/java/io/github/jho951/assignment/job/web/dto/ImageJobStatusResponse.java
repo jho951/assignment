@@ -12,5 +12,4 @@ public record ImageJobStatusResponse(
         Instant completedAt,
         Instant expiresAt,
         ImageJobErrorResponse error
-) {
-}
+) {}

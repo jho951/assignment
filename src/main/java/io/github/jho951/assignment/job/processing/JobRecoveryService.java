@@ -14,8 +14,10 @@ import io.github.jho951.assignment.job.domain.JobFailureCode;
 import io.github.jho951.assignment.job.domain.JobStatus;
 import io.github.jho951.assignment.job.domain.JobStatusTransitionPolicy;
 import io.github.jho951.assignment.job.repository.ImageJobRepository;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class JobRecoveryService {
 
     private final ImageJobRepository imageJobRepository;
@@ -23,20 +25,6 @@ public class JobRecoveryService {
     private final JobProcessor jobProcessor;
     private final JobProperties jobProperties;
     private final Clock clock;
-
-    public JobRecoveryService(
-            ImageJobRepository imageJobRepository,
-            JobStatusTransitionPolicy transitionPolicy,
-            JobProcessor jobProcessor,
-            JobProperties jobProperties,
-            Clock clock
-    ) {
-        this.imageJobRepository = imageJobRepository;
-        this.transitionPolicy = transitionPolicy;
-        this.jobProcessor = jobProcessor;
-        this.jobProperties = jobProperties;
-        this.clock = clock;
-    }
 
     @Transactional
     public void recoverStaleJobs() {
