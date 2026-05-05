@@ -1,7 +1,12 @@
 package io.github.jho951.assignment;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+
+import io.github.jho951.assignment.config.WorkerProperties;
 
 @SpringBootTest(properties = {
 		"jobs.scheduling-enabled=false",
@@ -11,8 +16,15 @@ import org.springframework.boot.test.context.SpringBootTest;
 })
 class AssignmentApplicationTests {
 
+	@Autowired
+	private WorkerProperties workerProperties;
+
 	@Test
-	void contextLoads() {
+	void contextLoads() {}
+
+	@Test
+	void shouldUseDocumentedDefaultWorkerIssueKeyPath() {
+		assertThat(workerProperties.issueKeyPath()).isEqualTo("/auth/issue-key");
 	}
 
 }

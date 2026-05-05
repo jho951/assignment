@@ -15,6 +15,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import io.github.jho951.assignment.job.domain.ImageJob;
+import io.github.jho951.assignment.job.domain.JobStatus;
 import io.github.jho951.assignment.job.repository.ImageJobRepository;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
@@ -90,6 +92,75 @@ class ImageJobControllerIntegrationTests {
     }
 
     @Test
+    void shouldReturnCurrentProcessingStatusForReplayOfSameIdempotencyKeyAndPayload() throws Exception {
+        String responseContent = mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "idem-2-processing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isAccepted())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String createdJobId = objectMapper.readTree(responseContent).get("jobId").asText();
+        ImageJob storedJob = imageJobRepository.findByJobId(createdJobId).orElseThrow();
+        storedJob.setStatus(JobStatus.PROCESSING);
+        imageJobRepository.save(storedJob);
+
+        mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "idem-2-processing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.jobId").value(createdJobId))
+                .andExpect(jsonPath("$.status").value("PROCESSING"));
+
+        org.assertj.core.api.Assertions.assertThat(imageJobRepository.findAll()).hasSize(1);
+    }
+
+    @Test
+    void shouldCreateNewJobForSameImageUrlWithDifferentIdempotencyKeys() throws Exception {
+        String firstResponse = mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "idem-2a")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isAccepted())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String secondResponse = mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "idem-2b")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isAccepted())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String firstJobId = objectMapper.readTree(firstResponse).get("jobId").asText();
+        String secondJobId = objectMapper.readTree(secondResponse).get("jobId").asText();
+
+        org.assertj.core.api.Assertions.assertThat(firstJobId).isNotEqualTo(secondJobId);
+    }
+
+    @Test
     void shouldRejectDifferentPayloadForSameIdempotencyKey() throws Exception {
         mockMvc.perform(post("/api/v1/image-jobs")
                         .header("Idempotency-Key", "idem-3")
@@ -111,6 +182,61 @@ class ImageJobControllerIntegrationTests {
                                 """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("IDEMPOTENCY_KEY_CONFLICT"));
+    }
+
+    @Test
+    void shouldRejectBlankIdempotencyKey() throws Exception {
+        mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "   ")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_IDEMPOTENCY_KEY"));
+    }
+
+    @Test
+    void shouldRejectMalformedIdempotencyKey() throws Exception {
+        mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "idem key")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_IDEMPOTENCY_KEY"));
+    }
+
+    @Test
+    void shouldRejectTooLongIdempotencyKey() throws Exception {
+        mockMvc.perform(post("/api/v1/image-jobs")
+                        .header("Idempotency-Key", "a".repeat(129))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("INVALID_IDEMPOTENCY_KEY"));
+    }
+
+    @Test
+    void shouldRejectMissingIdempotencyKey() throws Exception {
+        mockMvc.perform(post("/api/v1/image-jobs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "imageUrl": "https://example.com/images/input.png"
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("MISSING_IDEMPOTENCY_KEY"));
     }
 
     @Test
