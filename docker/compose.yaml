@@ -17,8 +17,8 @@ services:
 
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     depends_on:
       postgres:
         condition: service_healthy
@@ -28,8 +28,8 @@ services:
       SPRING_DATASOURCE_USERNAME: assignment
       SPRING_DATASOURCE_PASSWORD: assignment
       WORKER_BASE_URL: ${WORKER_BASE_URL:-https://dev.realteeth.ai/mock}
-      WORKER_CANDIDATE_NAME: ${WORKER_CANDIDATE_NAME:-assignment}
-      WORKER_CANDIDATE_EMAIL: ${WORKER_CANDIDATE_EMAIL:-assignment@example.com}
+      WORKER_CANDIDATE_NAME: ${WORKER_CANDIDATE_NAME:-이장호}
+      WORKER_CANDIDATE_EMAIL: ${WORKER_CANDIDATE_EMAIL:-jho951@naver.com}
     ports:
       - "8080:8080"
 
