@@ -52,7 +52,7 @@ public class JobProcessor {
 
     public List<String> findDueJobIds() {
         return imageJobRepository.findDueJobs(
-                        List.of(JobStatus.QUEUED, JobStatus.RETRY_SCHEDULED),
+                        List.of(JobStatus.QUEUED, JobStatus.RETRY_SCHEDULED, JobStatus.PROCESSING),
                         Instant.now(clock),
                         PageRequest.of(0, jobProperties.batchSize())
                 ).stream()
@@ -67,17 +67,28 @@ public class JobProcessor {
             if (imageJob == null) {
                 return false;
             }
-            if (imageJob.getStatus() != JobStatus.QUEUED && imageJob.getStatus() != JobStatus.RETRY_SCHEDULED) {
-                return false;
-            }
             if (imageJob.getNextAttemptAt() != null && imageJob.getNextAttemptAt().isAfter(now)) {
                 return false;
             }
 
-            transitionPolicy.assertTransition(imageJob.getStatus(), JobStatus.PROCESSING);
-            imageJob.setStatus(JobStatus.PROCESSING);
+            if (imageJob.getStatus() == JobStatus.QUEUED || imageJob.getStatus() == JobStatus.RETRY_SCHEDULED) {
+                transitionPolicy.assertTransition(imageJob.getStatus(), JobStatus.PROCESSING);
+                imageJob.setStatus(JobStatus.PROCESSING);
+            }
+            else if (imageJob.getStatus() == JobStatus.PROCESSING) {
+                if (imageJob.getLeaseUntil() != null || imageJob.getExternalJobId() == null) {
+                    return false;
+                }
+            }
+            else {
+                return false;
+            }
+
             imageJob.setAttemptCount(imageJob.getAttemptCount() + 1);
             imageJob.setLeaseUntil(now.plusMillis(jobProperties.leaseTimeoutMs()));
+            imageJob.setNextAttemptAt(now.plusMillis(jobProperties.leaseTimeoutMs()));
+            imageJob.setErrorCode(null);
+            imageJob.setErrorMessage(null);
             imageJobRepository.save(imageJob);
             return true;
         }));
@@ -90,18 +101,30 @@ public class JobProcessor {
                 return;
             }
 
-            if (imageJob.getExternalJobId() == null) {
-                WorkerStartResult startResult = workerClient.startProcess(imageJob.getImageUrl());
-                recordWorkerJobId(jobId, startResult.workerJobId());
-                if (startResult.status() == WorkerRemoteStatus.COMPLETED || startResult.status() == WorkerRemoteStatus.FAILED) {
-                    completeFromWorkerStatus(workerClient.getProcessStatus(startResult.workerJobId()), jobId);
-                    return;
-                }
-                pollUntilTerminal(jobId, startResult.workerJobId());
+            if (Thread.currentThread().isInterrupted()) {
+                handleInterruptedExecution(jobId);
                 return;
             }
 
-            pollUntilTerminal(jobId, imageJob.getExternalJobId());
+            if (imageJob.getExternalJobId() == null) {
+                WorkerStartResult startResult = workerClient.startProcess(imageJob.getImageUrl());
+                if (startResult.status() == WorkerRemoteStatus.COMPLETED || startResult.status() == WorkerRemoteStatus.FAILED) {
+                    recordWorkerJobId(jobId, startResult.workerJobId());
+                    completeFromWorkerStatus(workerClient.getProcessStatus(startResult.workerJobId()), jobId);
+                    return;
+                }
+
+                rescheduleProcessingPoll(jobId, startResult.workerJobId());
+                return;
+            }
+
+            WorkerStatusResult statusResult = workerClient.getProcessStatus(imageJob.getExternalJobId());
+            if (statusResult.status() == WorkerRemoteStatus.PROCESSING) {
+                rescheduleProcessingPoll(jobId, imageJob.getExternalJobId());
+                return;
+            }
+
+            completeFromWorkerStatus(statusResult, jobId);
         }
         catch (WorkerClientException exception) {
             handleWorkerFailure(jobId, exception);
@@ -109,22 +132,6 @@ public class JobProcessor {
         catch (Exception exception) {
             handleUnexpectedFailure(jobId, exception);
         }
-    }
-
-    private void pollUntilTerminal(String jobId, String workerJobId) throws InterruptedException {
-        while (!Thread.currentThread().isInterrupted()) {
-            WorkerStatusResult statusResult = workerClient.getProcessStatus(workerJobId);
-            if (statusResult.status() == WorkerRemoteStatus.PROCESSING) {
-                heartbeatLease(jobId);
-                Thread.sleep(Math.max(jobProperties.pollIntervalMs(), 100L));
-                continue;
-            }
-
-            completeFromWorkerStatus(statusResult, jobId);
-            return;
-        }
-        Thread.currentThread().interrupt();
-        throw new IllegalStateException("Job polling thread was interrupted");
     }
 
     private void completeFromWorkerStatus(WorkerStatusResult statusResult, String jobId) {
@@ -144,11 +151,13 @@ public class JobProcessor {
         });
     }
 
-    private void heartbeatLease(String jobId) {
+    private void rescheduleProcessingPoll(String jobId, String workerJobId) {
         transactionTemplate.executeWithoutResult(status -> {
             ImageJob imageJob = requireJob(jobId);
             if (imageJob.getStatus() == JobStatus.PROCESSING) {
-                imageJob.setLeaseUntil(Instant.now(clock).plusMillis(jobProperties.leaseTimeoutMs()));
+                imageJob.setExternalJobId(workerJobId);
+                imageJob.setLeaseUntil(null);
+                imageJob.setNextAttemptAt(Instant.now(clock).plusMillis(Math.max(jobProperties.pollIntervalMs(), 1L)));
                 imageJobRepository.save(imageJob);
             }
         });
@@ -189,6 +198,28 @@ public class JobProcessor {
                         ? "Unexpected internal error"
                         : exception.getMessage());
             }
+        });
+    }
+
+    private void handleInterruptedExecution(String jobId) {
+        transactionTemplate.executeWithoutResult(status -> {
+            ImageJob imageJob = requireJob(jobId);
+            if (imageJob.getStatus() != JobStatus.PROCESSING) {
+                return;
+            }
+
+            if (imageJob.getAttemptCount() < jobProperties.maxAttempts()) {
+                transitionPolicy.assertTransition(JobStatus.PROCESSING, JobStatus.RETRY_SCHEDULED);
+                imageJob.setStatus(JobStatus.RETRY_SCHEDULED);
+                imageJob.setErrorCode(JobFailureCode.INTERNAL_ERROR.name());
+                imageJob.setErrorMessage("Job polling thread was interrupted before completion");
+                imageJob.setLeaseUntil(null);
+                imageJob.setNextAttemptAt(Instant.now(clock).plus(calculateBackoff(imageJob.getAttemptCount())));
+                imageJobRepository.save(imageJob);
+                return;
+            }
+
+            markFailed(imageJob, JobFailureCode.MAX_ATTEMPTS_EXCEEDED, "Maximum retry attempts exceeded");
         });
     }
 

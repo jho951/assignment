@@ -16,18 +16,15 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import io.github.jho951.assignment.config.WorkerProperties;
 import io.github.jho951.assignment.job.domain.JobFailureCode;
+import lombok.RequiredArgsConstructor;
 
 @Component
+@RequiredArgsConstructor
 public class RestWorkerClient implements WorkerClient {
 
     private final RestClient restClient;
     private final WorkerProperties workerProperties;
     private final AtomicReference<String> cachedApiKey = new AtomicReference<>();
-
-    public RestWorkerClient(RestClient workerRestClient, WorkerProperties workerProperties) {
-        this.restClient = workerRestClient;
-        this.workerProperties = workerProperties;
-    }
 
     @Override
     public WorkerStartResult startProcess(String imageUrl) {
@@ -77,7 +74,12 @@ public class RestWorkerClient implements WorkerClient {
         try {
             return authorizedCall.execute(apiKey);
         }
-        catch (UnauthorizedWorkerException exception) {
+        catch (RestClientException exception) {
+            WorkerClientException mappedException = mapException(exception);
+            if (!(mappedException instanceof UnauthorizedWorkerException unauthorizedWorkerException)) {
+                throw mappedException;
+            }
+
             cachedApiKey.set(null);
             String refreshedApiKey;
             try {
@@ -95,6 +97,18 @@ public class RestWorkerClient implements WorkerClient {
             try {
                 return authorizedCall.execute(refreshedApiKey);
             }
+            catch (RestClientException retryException) {
+                WorkerClientException retriedException = mapException(retryException);
+                if (retriedException instanceof UnauthorizedWorkerException secondFailure) {
+                    throw new WorkerClientException(
+                            JobFailureCode.WORKER_AUTH_FAILED,
+                            false,
+                            "Mock Worker API key was rejected after refresh",
+                            secondFailure
+                    );
+                }
+                throw retriedException;
+            }
             catch (UnauthorizedWorkerException secondFailure) {
                 throw new WorkerClientException(
                         JobFailureCode.WORKER_AUTH_FAILED,
@@ -103,9 +117,6 @@ public class RestWorkerClient implements WorkerClient {
                         secondFailure
                 );
             }
-        }
-        catch (RestClientException exception) {
-            throw mapException(exception);
         }
     }
 

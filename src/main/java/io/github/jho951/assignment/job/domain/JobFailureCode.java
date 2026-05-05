@@ -2,6 +2,7 @@ package io.github.jho951.assignment.job.domain;
 
 public enum JobFailureCode {
     MISSING_IDEMPOTENCY_KEY,
+    INVALID_IDEMPOTENCY_KEY,
     INVALID_REQUEST,
     IDEMPOTENCY_KEY_CONFLICT,
     JOB_NOT_FOUND,

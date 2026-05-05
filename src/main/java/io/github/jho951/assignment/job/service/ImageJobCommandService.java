@@ -9,34 +9,29 @@ import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import io.github.jho951.assignment.job.domain.ImageJob;
 import io.github.jho951.assignment.job.domain.JobFailureCode;
 import io.github.jho951.assignment.job.repository.ImageJobRepository;
 import io.github.jho951.assignment.job.web.ApiException;
 import io.github.jho951.assignment.job.web.dto.ImageJobCreateRequest;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class ImageJobCommandService {
+
+    private static final int IDEMPOTENCY_KEY_MAX_LENGTH = 128;
+    private static final String IDEMPOTENCY_KEY_PATTERN = "^[A-Za-z0-9._-]+$";
+    private static final String INVALID_IDEMPOTENCY_KEY_MESSAGE =
+            "Idempotency-Key must be 1-128 characters of letters, digits, dot, underscore, or hyphen";
 
     private final ImageJobRepository imageJobRepository;
     private final RequestHashService requestHashService;
     private final Clock clock;
 
-    public ImageJobCommandService(
-            ImageJobRepository imageJobRepository,
-            RequestHashService requestHashService,
-            Clock clock
-    ) {
-        this.imageJobRepository = imageJobRepository;
-        this.requestHashService = requestHashService;
-        this.clock = clock;
-    }
-
-    @Transactional
     public CreateJobResult createJob(String idempotencyKey, ImageJobCreateRequest request) {
-        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+        if (idempotencyKey == null) {
             throw new ApiException(
                     HttpStatus.BAD_REQUEST,
                     JobFailureCode.MISSING_IDEMPOTENCY_KEY,
@@ -45,6 +40,7 @@ public class ImageJobCommandService {
         }
 
         String normalizedKey = idempotencyKey.trim();
+        validateIdempotencyKey(normalizedKey);
         String requestHash = requestHashService.hashImageUrl(request.imageUrl());
 
         Optional<ImageJob> existingJob = imageJobRepository.findByIdempotencyKey(normalizedKey);
@@ -88,6 +84,18 @@ public class ImageJobCommandService {
 
     private String generateJobId() {
         return "job_" + UUID.randomUUID().toString().replace("-", "");
+    }
+
+    private void validateIdempotencyKey(String idempotencyKey) {
+        if (idempotencyKey.isEmpty()
+                || idempotencyKey.length() > IDEMPOTENCY_KEY_MAX_LENGTH
+                || !idempotencyKey.matches(IDEMPOTENCY_KEY_PATTERN)) {
+            throw new ApiException(
+                    HttpStatus.BAD_REQUEST,
+                    JobFailureCode.INVALID_IDEMPOTENCY_KEY,
+                    INVALID_IDEMPOTENCY_KEY_MESSAGE
+            );
+        }
     }
 
     public record CreateJobResult(
