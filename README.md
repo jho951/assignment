@@ -249,6 +249,7 @@ GET /api/v1/image-jobs?page=0&size=20&status=SUCCEEDED
 ### 결과 보존과 목록 조회
 
 - terminal job 결과는 완료 시각 기준 7일 보존합니다.
+- `expiresAt`이 지난 terminal job은 cleanup scheduler가 아직 물리 삭제하지 않았더라도 상태 조회/결과 조회에서 즉시 `404`, 목록 조회에서는 즉시 제외합니다.
 - 목록 조회 API는 `GET /api/v1/image-jobs`입니다.
 - 정렬은 `createdAt DESC`, `jobId DESC`를 사용합니다.
 - `page`, `size`, `status` 필터를 지원합니다.

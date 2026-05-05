@@ -76,14 +76,27 @@
 3. XML 요약은 `build/reports/jacoco/test/jacocoTestReport.xml`에서 확인한다.
 4. service, processor, scheduler, configuration 경계의 미커버 분기를 우선 보강한다.
 
+### Terminal expiry 가시성 검증
+
+1. terminal job 하나를 만들고 `expiresAt`을 현재 시각보다 과거로 조정한다.
+2. cleanup scheduler를 기다리지 않고 바로 `GET /api/v1/image-jobs/{jobId}`를 호출한다.
+3. 응답이 `404 Not Found`와 `JOB_NOT_FOUND`인지 확인한다.
+4. `GET /api/v1/image-jobs/{jobId}/result`도 같은 방식으로 `404`인지 확인한다.
+5. `GET /api/v1/image-jobs`와 `GET /api/v1/image-jobs?status=SUCCEEDED`에서 해당 job이 즉시 제외되는지 확인한다.
+
 ### Kotlin 마이그레이션 점검
 
 1. Kotlin plugin/dependency 추가 직후 `./gradlew test`를 실행해 mixed Java/Kotlin compile 이 깨지지 않는지 확인한다.
 2. Spring bean 생성 오류나 CGLIB proxy 오류가 나면 Kotlin Spring plugin 적용 여부와 final class 여부를 확인한다.
 3. JPA entity instantiation 오류가 나면 Kotlin JPA plugin, no-arg/open 처리, entity constructor visibility 를 확인한다.
 4. 요청 바인딩에서 `400` 또는 `MissingKotlinParameterException`이 나면 `jackson-module-kotlin`, nullable type 선언, DTO validation annotation target(`@field:`)을 확인한다.
-5. Mockito 가 Kotlin concrete class 를 mock 하지 못하면 final class 대응 전략 적용 여부를 확인하거나 interface mocking 으로 되돌린다.
-6. 마이그레이션 배치가 끝날 때마다 `./gradlew test jacocoTestReport`를 다시 실행하고 controller/service/processor/worker regression 을 확인한다.
+5. mixed Java/Kotlin 단계에서 Kotlin compile 이 Java Lombok class 의 getter/property 를 못 찾으면 Kotlin Lombok plugin 적용 여부를 확인한다. 현재 main source 는 Kotlin 완료 상태라 기본 branch 에서는 이 단계가 필요하지 않다.
+6. mixed 단계에서 `compileTestJava`가 Kotlin class constructor 나 boolean getter 를 못 찾으면 Java interop shape(`@JvmRecord`, secondary constructor, `isXxx` getter)를 확인한다.
+7. Kotlin 테스트에서 Mockito matcher 사용 시 `NullPointerException`이나 `InvalidUseOfMatchersException`이 나면 raw `any()/eq()`를 줄이고 exact argument stubbing, non-null matcher(`anyList()` 등), 또는 간단한 concrete stub 객체로 바꾼다.
+8. Mockito 가 Kotlin concrete class 를 mock 하지 못하면 final class 대응 전략 적용 여부를 확인하거나 interface mocking 으로 되돌린다.
+9. 마이그레이션 배치가 끝날 때마다 `./gradlew test jacocoTestReport`를 다시 실행하고 controller/service/processor/worker regression 을 확인한다.
+10. `compileJava`가 `NO-SOURCE`로 나오면 main application source 의 Java -> Kotlin 전환은 완료된 상태로 본다.
+11. `compileTestJava`가 `NO-SOURCE`로 나오면 test source 의 Java -> Kotlin 전환도 완료된 상태로 본다.
 
 ## 확인할 로그
 
@@ -102,7 +115,7 @@
 - `WORKER_BASE_URL=https://dev.realteeth.ai/mock`인데 최종 호출 URL에서 `/mock`가 빠져 `403` 또는 `404`가 나는 경우
 - Worker `401`으로 인한 API Key 재발급 반복
 - timeout 누적으로 인한 `MAX_ATTEMPTS_EXCEEDED`
-- terminal job 만료 이후 `404 Not Found`
+- terminal job 만료 이후 cleanup 전에도 즉시 `404 Not Found`
 
 ## 복구 절차
 

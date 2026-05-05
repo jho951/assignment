@@ -36,9 +36,11 @@
 - 작업 결과 조회:
   - 완료된 작업의 결과를 조회할 수 있어야 한다.
   - 실패한 작업은 실패 사실과 원인을 식별 가능하게 표현해야 한다.
+  - 결과 보존 기간이 지난 terminal job은 cleanup 이전이라도 조회 시 `404 Not Found`로 취급되어야 한다.
 - 작업 목록 조회:
   - 클라이언트가 작업 목록을 조회할 수 있어야 한다.
   - 정렬, 페이징, 필터링 정책은 설계자가 정하되 README에 명시해야 한다.
+  - 보존 기간이 지난 terminal job은 cleanup 이전이라도 목록에서 제외되어야 한다.
 - 외부 연동:
   - `POST /mock/auth/issue-key`를 사용해 API Key를 발급받아야 한다.
   - `POST /mock/process` 호출 시 `X-API-KEY` 헤더를 포함해야 한다.
@@ -116,6 +118,9 @@
 - Worker API key lazy issuance, `401` refresh retry, timeout/backoff, single-step `PROCESSING` continuation, stale recovery semantics 는 변경하면 안 된다.
 - DB table/column/index/constraint 이름과 optimistic lock, lease, expiry 관련 저장 semantics 는 유지해야 한다.
 - Kotlin 전환은 big-bang 이 아니라 Java/Kotlin 혼합 상태를 허용하는 점진적 순서로 진행해야 한다.
+- mixed migration 중 record-like DTO/config type 은 Java 호출부 회귀를 줄이기 위해 record-style interop 를 유지해야 한다.
+- mixed migration 중 남아 있는 Java Lombok class 를 Kotlin 에서 참조해야 하면 Lombok interop build 설정도 함께 유지해야 한다.
+- mixed migration 중 Java 테스트가 직접 호출하는 예외/utility/value type 은 constructor overload 와 getter naming shape 도 유지해야 한다.
 - Spring proxy 와 JPA 동작을 위해 Kotlin build/runtime 설정에서 `spring`, `jpa`, reflection, Jackson Kotlin module 호환성을 보장해야 한다.
 - Kotlin nullability 선언은 현재 nullable header/query param, nullable response field, nullable persistence field의 의미를 그대로 반영해야 한다.
 - JPA entity 는 기본적으로 `data class`로 바꾸지 않고 일반 Kotlin class 로 유지해야 한다.
@@ -145,14 +150,14 @@
 - 컨테이너 실행 방식과 런타임 구성: `docs/decisions/009-container-and-runtime-config.md`
   - 구현 산출물: `docker/Dockerfile`, `docker/compose.yaml`, `.env.example`
 - 우리 서버 공개 API Swagger 노출과 Mock Worker 외부 OpenAPI 참조 방식: `docs/decisions/010-openapi-and-swagger-ui.md`
-- 반복 생성자/접근자 축소를 위한 Lombok 사용 범위: `docs/decisions/011-lombok-for-boilerplate-reduction.md`
+- Java 단계의 Lombok 사용 범위와 제거 시점: `docs/decisions/011-lombok-for-boilerplate-reduction.md`, `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`
 - single-step `PROCESSING` continuation, interrupt 복구, `attemptCount` 의미: `docs/decisions/012-processing-attempt-deadline-and-interrupt-recovery.md`
 - coverage report 생성 방식과 테스트 우선순위: `docs/decisions/013-coverage-reporting-and-test-focus.md`
 - Kotlin 점진 마이그레이션 순서와 요구사항 보호 가드레일: `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`
 
 ## 현재 미결정 항목
 
-- 없음. Kotlin 마이그레이션이 필요하면 `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`와 `prompts/plans/002-kotlin-migration-plan.md`를 따른다.
+- 없음. 2026-05-06 기준 main source 와 test source Kotlin 마이그레이션, Lombok 정리가 모두 완료됐다. 이후 추가 언어 전환이나 테스트 전략 조정이 필요하면 `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`와 `prompts/plans/002-kotlin-migration-plan.md`를 따른다.
 
 ## 대화 기록
 

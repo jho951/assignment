@@ -12,10 +12,13 @@
 - `008-worker-integration-and-retry.md`
 - `009-container-and-runtime-config.md`
 - `010-openapi-and-swagger-ui.md`
-- `011-lombok-for-boilerplate-reduction.md`
 - `012-processing-attempt-deadline-and-interrupt-recovery.md`
 - `013-coverage-reporting-and-test-focus.md`
 - `014-kotlin-migration-strategy-and-guardrails.md`
+
+## 이력 보존 ADR
+
+- `011-lombok-for-boilerplate-reduction.md`
 
 ## 연계 문서
 

@@ -34,6 +34,7 @@
 - 공개 API Swagger UI endpoint: `/swagger-ui.html`
 - 시간 필드는 RFC 3339 UTC 문자열을 사용한다.
 - `imageUrl`은 `http` 또는 `https` URL만 허용한다.
+- `expiresAt`이 지난 terminal job은 cleanup 이전이라도 상태/결과 조회에서 `404`, 목록 조회에서 제외한다.
 - 인증/권한 모델은 과제 범위에서 제외한다.
 - executor thread는 한 번 claim한 job에 대해 `startProcess` 또는 `getProcessStatus` 한 번만 수행한다.
 - remote Worker가 계속 `PROCESSING`이면 job status는 `PROCESSING`을 유지한 채 lease를 해제하고 다음 poll 시점으로 되돌린다.
