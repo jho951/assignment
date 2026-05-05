@@ -58,14 +58,19 @@
 
 - 동일 요청이 여러 번 들어올 수 있음을 전제로 해야 한다.
 - 어떤 기준으로 동일 요청을 판단할지 정의해야 한다.
+- `Idempotency-Key` 누락, 형식 오류, 재사용 충돌을 어떻게 구분해 표현할지 정의해야 한다.
+- 유효한 새 요청은 `QUEUED`를 반환하고 이후 비동기 처리로 넘어간다는 점을 설명해야 한다.
+- 같은 `Idempotency-Key` replay는 기존 job의 현재 상태를 그대로 반환한다는 점을 설명해야 한다.
 - 중복 요청에 대한 사용자 관찰 가능 동작을 설명해야 한다.
 - 중복 요청 처리 전략과 데이터 정합성 영향 범위를 README에 설명해야 한다.
+- 같은 `Idempotency-Key` 동시 요청 race에서도 job이 하나로 수렴하는지 검증해야 한다.
 
 ## 처리 보장 및 장애 복구 요구사항
 
 - 시스템의 처리 보장 모델을 명시해야 한다.
 - 그렇게 판단한 근거를 설명해야 한다.
 - 서버 재시작 시 진행 중 작업이 어떻게 되는지 설명해야 한다.
+- `PROCESSING` 상태가 무기한 지속되지 않도록 attempt 단위 종료 또는 재시도 기준을 정의해야 한다.
 - 데이터 정합성이 깨질 수 있는 시점과 완화 전략을 기술해야 한다.
 
 ## 가정
@@ -94,6 +99,12 @@
   - 트래픽 증가 시 병목 지점과 보호 전략(예: 동시성 제한, 큐잉, 백프레셔)을 설명해야 한다.
 - 운영성:
   - 테스트 코드로 핵심 동작을 검증해야 한다.
+  - `./gradlew test jacocoTestReport`로 재현 가능한 coverage report를 생성할 수 있어야 한다.
+  - 같은 `Idempotency-Key` 동시 요청이 단일 job으로 수렴하는 시나리오를 통합 테스트로 유지해야 한다.
+  - `JobProcessor` 핵심 로직은 due job 조회, claim, single-step Worker start/status poll, in-progress reschedule, retry/backoff, interrupt 경로를 포함해 검증해야 한다.
+  - `ImageJobCommandService`, `ImageJobQueryService`, recovery/cleanup/processing scheduler, 설정 bean 경계도 단위 테스트로 유지해 커버리지 공백을 줄여야 한다.
+  - `RestWorkerClient`는 API key issuance, cached key reuse, `401` refresh retry, 4xx/5xx/timeout mapping, invalid response 검증을 포함해 branch coverage를 유지해야 한다.
+  - 예외 응답 경계는 `ApiException`, validation error, unexpected exception 경로를 포함해 검증해야 한다.
   - 컨테이너 환경에서 재현 가능하게 실행되어야 한다.
   - 디버깅 절차와 실행 방법이 문서화되어야 한다.
 
@@ -118,9 +129,17 @@
 - Worker 연동, timeout/retry, lazy API Key issuance: `docs/decisions/008-worker-integration-and-retry.md`
   - `WORKER_BASE_URL`과 Worker path가 합쳐질 때 최종 URL이 `.../mock/...`로 유지되도록 구현한다.
 - 컨테이너 실행 방식과 런타임 구성: `docs/decisions/009-container-and-runtime-config.md`
-  - 구현 산출물: `Dockerfile`, `compose.yaml`, `.env.example`
+  - 구현 산출물: `docker/Dockerfile`, `docker/compose.yaml`, `.env.example`
 - 우리 서버 공개 API Swagger 노출과 Mock Worker 외부 OpenAPI 참조 방식: `docs/decisions/010-openapi-and-swagger-ui.md`
+- 반복 생성자/접근자 축소를 위한 Lombok 사용 범위: `docs/decisions/011-lombok-for-boilerplate-reduction.md`
+- single-step `PROCESSING` continuation, interrupt 복구, `attemptCount` 의미: `docs/decisions/012-processing-attempt-deadline-and-interrupt-recovery.md`
+- coverage report 생성 방식과 테스트 우선순위: `docs/decisions/013-coverage-reporting-and-test-focus.md`
 
 ## 현재 미결정 항목
 
 - 없음. 남은 구현 세부와 운영 절차는 README, API 문서, 런북에서 구체화한다.
+
+## 대화 기록
+
+- 2026-05-04 요구사항 해설, 구현 우선순위, RDBMS 선택 검토 메모: `docs/notes/2026-05-04-conversation-summary.md`
+- rolling transcript: `docs/notes/conversation-log.md`

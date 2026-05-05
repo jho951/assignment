@@ -13,6 +13,7 @@ Mock Worker는 외부에서 제공되는 서비스이며 지연, timeout, 5xx, �
 ## 결정
 
 - Worker base URL은 `WORKER_BASE_URL` 환경 변수로 주입한다.
+- Worker API Key 발급 path 기본값은 `/auth/issue-key`로 둔다.
 - Worker API Key 발급에 필요한 candidate identity는 환경 변수 또는 설정으로 주입한다.
 - 애플리케이션 시작 시 Worker API Key를 강제로 발급받지 않는다.
 - Worker API Key는 실제 Worker 호출 시점에 lazy issuance 한다.
@@ -24,11 +25,13 @@ Mock Worker는 외부에서 제공되는 서비스이며 지연, timeout, 5xx, �
 - 구현에서는 `WORKER_BASE_URL` 뒤에 상대 path `/process`, `/process/{jobId}`를 안전하게 append한다.
 - Worker HTTP 호출 timeout은 5초로 둔다.
 - timeout, 5xx, 429, 네트워크 오류는 재시도 대상이다.
+- Worker가 non-terminal status만 반환하면 로컬 status 는 `PROCESSING` 을 유지하고 다음 scheduler tick 에 다시 poll 한다.
 - `401`을 제외한 4xx는 기본적으로 즉시 실패 처리한다.
 - `401`은 현재 key를 폐기하고 재발급 후 1회 즉시 재시도할 수 있다.
 - 일반 재시도 정책은 총 시도 횟수 `maxAttempts = 3`을 사용한다.
 - 재시도 지연 정책은 `2초 -> 10초 -> 30초` backoff sequence를 사용한다.
 - Worker가 응답하지 않거나 인증에 실패해도 애플리케이션은 계속 실행되고, 실패는 해당 job 상태와 오류 코드로 표현한다.
+- single-step polling 과 interruption 처리의 구체적 semantics는 `docs/decisions/012-processing-attempt-deadline-and-interrupt-recovery.md`를 따른다.
 
 ## 실패 코드
 

@@ -31,7 +31,9 @@ Mock Worker는 지연과 실패 가능성이 있으므로, 상태 모델은 재�
 복구와 재시도는 다음 규칙으로 상태 전이에 반영한다.
 
 - 재시도 가능한 Worker 실패는 `PROCESSING -> RETRY_SCHEDULED`로 전환한다.
-- 서버 재시작 또는 scheduler 복구 시 `leasedUntil`이 지난 stale `PROCESSING` 작업은 시도 가능 횟수가 남아 있으면 `RETRY_SCHEDULED`로, 남아 있지 않으면 `FAILED`로 전환한다.
+- remote Worker 가 `PROCESSING` 을 반환하면 상태는 그대로 `PROCESSING` 을 유지하고, lease 를 해제한 뒤 다음 poll 시점으로 재스케줄한다.
+- polling thread interruption 이 발생하면 남은 시도 횟수가 있을 때 `PROCESSING -> RETRY_SCHEDULED`로 전환하고, 그렇지 않으면 `FAILED`로 종료한다.
+- 서버 재시작 또는 scheduler 복구 시 `leaseUntil`이 지난 stale `PROCESSING` 작업은 시도 가능 횟수가 남아 있으면 `RETRY_SCHEDULED`로, 남아 있지 않으면 `FAILED`로 전환한다.
 - `SUCCEEDED`, `FAILED`는 terminal state이며 이후 다른 상태로 전이하지 않는다.
 
 비허용 상태 전이는 다음과 같다.
@@ -45,12 +47,13 @@ Mock Worker는 지연과 실패 가능성이 있으므로, 상태 모델은 재�
 
 재시도 정책은 다음과 같다.
 
-- 최대 Worker 호출 시도 횟수는 3회다.
+- 최대 처리 attempt 횟수는 3회다.
 - timeout, 네트워크 오류, 5xx, 429는 재시도한다.
 - `401`을 제외한 4xx는 기본적으로 최종 실패로 처리한다.
 - 401은 API key 재발급 후 1회 즉시 재시도한다.
 - backoff는 `2초 -> 10초 -> 30초` sequence를 사용한다.
 - 최대 시도 횟수를 넘으면 `FAILED`로 전환한다.
+- `attemptCount`는 scheduler가 claim한 처리 attempt 수를 의미하며, 기존 `externalJobId` polling 재개도 같은 attempt로 센다.
 
 ## 이유
 
@@ -64,6 +67,7 @@ Mock Worker는 지연과 실패 가능성이 있으므로, 상태 모델은 재�
 - 장점:
   - API 응답과 내부 처리 흐름이 단순하다.
   - 테스트해야 할 상태 전이가 명확하다.
+  - `JobProcessor` 단위 테스트로 due 조회, claim, 성공/실패, in-progress reschedule, retry/backoff, interrupt 경로를 직접 고정하기 쉽다.
 - 단점:
   - 취소, 일시정지, 만료 같은 고급 상태는 표현하지 않는다.
 - 향후 개선:

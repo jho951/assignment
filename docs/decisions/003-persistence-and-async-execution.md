@@ -16,10 +16,11 @@ Mock Worker는 지연과 실패 가능성이 있는 외부 시스템이다.
 - 로컬/테스트 환경에서는 H2 file DB를 사용할 수 있다.
 - 컨테이너 실행 환경에서는 PostgreSQL을 사용한다.
 - 별도 메시지 큐는 도입하지 않고 DB-backed queue를 사용한다.
-- Scheduler가 `QUEUED`, `RETRY_SCHEDULED` 상태의 작업을 조회한다.
-- 처리 대상 작업은 transaction 안에서 `PROCESSING`으로 전환하고 `leasedUntil`을 설정한다.
+- Scheduler가 due `QUEUED`, `RETRY_SCHEDULED`, `PROCESSING` 작업을 조회한다.
+- 처리 대상 작업은 transaction 안에서 `PROCESSING`으로 전환하거나 기존 `PROCESSING` continuation을 claim하고 `leaseUntil`을 설정한다.
 - Worker 호출은 transaction 밖에서 수행한다.
-- 오래된 `PROCESSING` 작업은 `leasedUntil` 기준으로 복구한다.
+- remote Worker가 계속 `PROCESSING`이면 lease를 해제하고 `nextAttemptAt` 기준으로 다음 scheduler tick에서 continuation을 재개한다.
+- 오래된 `PROCESSING` 작업은 `leaseUntil` 기준으로 복구한다.
 
 ## 이유
 

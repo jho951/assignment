@@ -45,13 +45,45 @@
 3. timeout 발생 후 `WORKER_TIMEOUT`이 기록되는지 확인한다.
 4. 재시도 지연이 `2초`, `10초` 순서로 반영되는지 확인한다.
 
+### In-progress poll 재현
+
+1. Worker가 `startProcess` 또는 `getProcessStatus`에서 계속 `PROCESSING`을 반환하도록 준비한다.
+2. 작업을 생성한다.
+3. 한 번의 scheduler execution 이 remote call 한 번만 수행하고 종료하는지 확인한다.
+4. job status 가 `PROCESSING`을 유지한 채 `leaseUntil = null`, `nextAttemptAt = now + pollInterval` 로 갱신되는지 확인한다.
+5. 다음 scheduler tick 에 기존 `externalJobId` polling 이 다시 재개되는지 확인한다.
+
+### Idempotency 동시 요청 검증
+
+1. `./gradlew test --tests io.github.jho951.assignment.job.web.ImageJobConcurrencyIntegrationTests`를 실행한다.
+2. 같은 `Idempotency-Key`로 동시에 여러 `POST /api/v1/image-jobs` 요청이 발생하는지 테스트 이름으로 확인한다.
+3. 테스트가 `202 Accepted` 1건, `200 OK` replay 나머지, 단일 DB row, 동일 `jobId` 수렴을 검증하는지 확인한다.
+
+### JobProcessor 경로 검증
+
+1. `./gradlew test --tests io.github.jho951.assignment.job.processing.JobProcessorTests`를 실행한다.
+2. due job 조회, claim, Worker success/failure, in-progress reschedule, retry/backoff, interrupt path가 모두 검증되는지 테스트 이름으로 확인한다.
+
+### RestWorkerClient 경로 검증
+
+1. `./gradlew test --tests io.github.jho951.assignment.job.worker.RestWorkerClientTests`를 실행한다.
+2. API key issuance, cached key reuse, `401` refresh retry, invalid response, 4xx/5xx/timeout mapping이 모두 검증되는지 확인한다.
+
+### Coverage 리포트 생성
+
+1. `./gradlew test jacocoTestReport`를 실행한다.
+2. HTML 리포트는 `build/reports/jacoco/test/html/index.html`에서 확인한다.
+3. XML 요약은 `build/reports/jacoco/test/jacocoTestReport.xml`에서 확인한다.
+4. service, processor, scheduler, configuration 경계의 미커버 분기를 우선 보강한다.
+
 ## 확인할 로그
 
 - Worker API Key lazy issuance 시도
 - `POST https://dev.realteeth.ai/mock/auth/issue-key` 또는 상대 path `/auth/issue-key` 성공/실패
 - `POST https://dev.realteeth.ai/mock/process` 또는 상대 path `/process` timeout, 4xx, 5xx, 네트워크 오류
 - job 상태 전이: `QUEUED -> PROCESSING -> RETRY_SCHEDULED|FAILED|SUCCEEDED`
-- `leasedUntil` 기반 복구 처리
+- remote `PROCESSING` 응답 시 lease가 해제되고 다음 poll 시점으로 재스케줄되는지
+- `leaseUntil` 기반 복구 처리
 
 ## 자주 발생하는 장애
 
@@ -71,3 +103,4 @@
 4. Worker 장애가 해소되면 scheduler가 `RETRY_SCHEDULED` 작업을 다시 집행하는지 확인한다.
 5. `FAILED`로 종료된 job은 정책상 자동 복구되지 않으므로 재요청이 필요한지 판단한다.
 6. stale `PROCESSING` job이 있으면 lease 만료 후 복구 로직이 `RETRY_SCHEDULED` 또는 `FAILED`로 정리하는지 확인한다.
+7. executor interruption 또는 장시간 `PROCESSING`이 있었다면 `attemptCount`, `nextAttemptAt`, `externalJobId`가 다음 attempt에 맞게 유지되는지 확인한다.

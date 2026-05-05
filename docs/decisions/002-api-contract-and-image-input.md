@@ -25,6 +25,7 @@
 - 상태 조회와 목록 조회 응답은 내부 job 상태를 그대로 노출한다.
 - 결과 조회 응답은 terminal job에 대해서만 `result` 또는 `error`를 반환한다.
 - `POST`는 새 작업이면 `202 Accepted`, 같은 요청 replay면 `200 OK`, 같은 key의 다른 요청이면 `409 Conflict`를 반환한다.
+- 오류 응답은 `ApiErrorResponse(code, message)` 형식으로 통일하고, API 예외, validation error, unexpected exception 경계를 동일한 모델로 표현한다.
 
 ## 이유
 

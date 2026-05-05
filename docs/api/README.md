@@ -18,7 +18,7 @@
 - `jobId`: 서버가 발급한 작업 식별자
 - `status`: `QUEUED`, `PROCESSING`, `RETRY_SCHEDULED`, `SUCCEEDED`, `FAILED`
 - `imageUrl`: 원본 이미지 URL
-- `attemptCount`: Worker 호출 시도 횟수
+- `attemptCount`: scheduler가 job을 claim해 처리 또는 기존 `externalJobId` polling 재개를 시도한 횟수
 - `createdAt`: 작업 생성 시각
 - `updatedAt`: 마지막 상태 변경 시각
 - `completedAt`: 종료 시각, 미종료면 `null`
@@ -35,6 +35,8 @@
 - 시간 필드는 RFC 3339 UTC 문자열을 사용한다.
 - `imageUrl`은 `http` 또는 `https` URL만 허용한다.
 - 인증/권한 모델은 과제 범위에서 제외한다.
+- executor thread는 한 번 claim한 job에 대해 `startProcess` 또는 `getProcessStatus` 한 번만 수행한다.
+- remote Worker가 계속 `PROCESSING`이면 job status는 `PROCESSING`을 유지한 채 lease를 해제하고 다음 poll 시점으로 되돌린다.
 
 ## 작업 생성
 
@@ -43,6 +45,8 @@
 ### 헤더
 
 - `Idempotency-Key`: 필수
+  - trim 후 `1..128`자
+  - 허용 문자: 영문 대소문자, 숫자, `.`, `_`, `-`
 
 ### 요청 본문
 
@@ -54,15 +58,17 @@
 
 ### 동작
 
-- 새 요청이면 새 job을 생성하고 비동기 처리를 시작한다.
+- 유효한 새 요청이면 새 job을 생성하고 `QUEUED` 상태를 반환한 뒤 비동기 처리를 시작한다.
 - 같은 `Idempotency-Key`와 같은 요청이면 기존 job을 반환한다.
-- 같은 `Idempotency-Key`와 다른 요청이면 `409 Conflict`를 반환한다.
+- replay 응답의 `status`는 고정값이 아니라 기존 job의 현재 상태다. 예를 들어 기존 job이 `PROCESSING`이면 `PROCESSING`을 반환한다.
+- 같은 `Idempotency-Key`와 다른 요청이면 잘못된 재시도 요청으로 보고 `409 Conflict`를 반환한다.
+- 같은 `imageUrl`이라도 `Idempotency-Key`가 다르면 별도의 새 job을 생성한다.
 
 ### 응답
 
-- `202 Accepted`: 새 job 생성
-- `200 OK`: 같은 요청의 idempotent replay
-- `400 Bad Request`: `Idempotency-Key` 누락 또는 요청 형식 오류
+- `202 Accepted`: 새 job 생성, 응답 `status`는 `QUEUED`
+- `200 OK`: 같은 요청의 idempotent replay, 응답 `status`는 기존 job의 현재 상태
+- `400 Bad Request`: `Idempotency-Key` 누락, `Idempotency-Key` 형식 오류, 또는 요청 형식 오류
 - `409 Conflict`: 같은 `Idempotency-Key`에 다른 요청 본문 사용
 
 ```json
@@ -202,6 +208,7 @@
 대표 오류 코드는 다음과 같다.
 
 - `MISSING_IDEMPOTENCY_KEY`
+- `INVALID_IDEMPOTENCY_KEY`
 - `INVALID_REQUEST`
 - `IDEMPOTENCY_KEY_CONFLICT`
 - `JOB_NOT_FOUND`

@@ -15,10 +15,11 @@ Mock Worker API Key와 재시도의 구체적 운영 방식은 별도 Worker 연
 - 작업 접수 API가 job 레코드를 영속화하고 `QUEUED` 상태를 기록한 시점부터 시스템의 내부 처리 보장 모델은 `at-least-once`로 정의한다.
 - `Idempotency-Key` 제약으로 job 생성은 key 기준 exactly-once에 가깝게 보장하지만, 외부 Mock Worker 호출은 장애 경계에서 중복 실행될 수 있다.
 - Worker 호출 흐름은 `QUEUE/LEASE 기록 -> 외부 호출 -> 결과 상태 기록` 순서를 따른다.
-- 서버가 `PROCESSING` 상태에서 중단되면 `leasedUntil`이 지난 작업을 복구 대상으로 간주하고, 다음 scheduler 주기 또는 재시작 후 `RETRY_SCHEDULED` 또는 `FAILED`로 정리한다.
-- 데이터 정합성이 흔들릴 수 있는 대표 시점은 `Mock Worker 성공 응답 수신 후 DB 상태 반영 전 프로세스 중단`, `timeout 이후 실제 Worker 완료 여부를 확인할 수 없는 경우`, `401 응답 직후 API Key 교체 중 동시 요청이 겹치는 경우`다.
+- executor thread 는 한 번 claim한 job 당 remote call 한 번만 수행하고, remote 가 계속 `PROCESSING` 이면 lease 를 해제한 채 다음 poll 시점으로 넘긴다.
+- 서버가 `PROCESSING` 상태에서 중단되면 `leaseUntil`이 지난 작업을 복구 대상으로 간주하고, 다음 scheduler 주기 또는 재시작 후 `RETRY_SCHEDULED` 또는 `FAILED`로 정리한다.
+- 데이터 정합성이 흔들릴 수 있는 대표 시점은 `Mock Worker 성공 응답 수신 후 DB 상태 반영 전 프로세스 중단`, `remote Worker 는 계속 진행 중이지만 다음 poll 전까지 우리 서버 상태 반영이 지연되는 경우`, `executor interruption 이후 기존 remote job 상태를 아직 다시 확인하지 못한 경우`, `401 응답 직후 API Key 교체 중 동시 요청이 겹치는 경우`다.
 - 완화 전략은 lease 기반 복구, retryable failure 한정 재시도, 시도 횟수 상한, terminal state 고정, 중복 job 생성 방지다.
-- Mock Worker 인증과 재시도의 구체적 운영 규칙은 `docs/decisions/008-worker-integration-and-retry.md`를 따른다.
+- Mock Worker 인증과 재시도의 구체적 운영 규칙은 `docs/decisions/008-worker-integration-and-retry.md`, `docs/decisions/012-processing-attempt-deadline-and-interrupt-recovery.md`를 따른다.
 
 ## 이유
 
