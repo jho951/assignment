@@ -1770,3 +1770,352 @@ Lombok 의존을 build에서 뺐으니 이제 실제 회귀를 확인하겠습�
 
 누락돼 있던 대화 요약 문서도 [2026-05-04-conversation-summary.md](/Users/jhons/Downloads/assignment/docs/notes/2026-05-04-conversation-summary.md:1)로 추가했고, 이번 batch까지 [conversation-log.md](/Users/jhons/Downloads/assignment/docs/notes/conversation-log.md:1)에 이어서 기록했습니다. 검증은 `./gradlew test jacocoTestReport`로 통과했고, build 로그에서 `compileJava NO-SOURCE`가 확인돼 main application source의 Java -> Kotlin 전환이 실제로 마무리된 상태입니다.
 ```
+
+### Turn 36
+
+**User**
+
+```text
+# AGENTS.md instructions for /Users/jhons/Downloads/assignment
+
+<INSTRUCTIONS>
+# AGENTS 가이드
+
+- `docs/REQUIREMENTS.md`, `docs/decisions`, `prompts`를 항상 함께 갱신합니다.
+- 중요한 기술 선택은 ADR로 기록합니다.
+- 재현 가능한 디버깅 절차를 `docs/runbook/DEBUG.md`에 유지합니다.
+- 모든 대화 내용은 `docs/notes/conversation-log.md`에 기록합니다.
+
+</INSTRUCTIONS><environment_context>
+  <cwd>/Users/jhons/Downloads/assignment</cwd>
+  <shell>zsh</shell>
+  <current_date>2026-05-06</current_date>
+  <timezone>Asia/Seoul</timezone>
+</environment_context>
+```
+
+### Turn 37
+
+**User**
+
+```text
+도커 컴포즈가 아니라 compose.yaml로 구현하는게 좋은 점이 뭐야?
+```
+
+**Assistant Update**
+
+```text
+질문 의도는 `docker-compose.yml` 같은 예전 표기 대신 `compose.yaml`을 쓰는 장점이 무엇인지 정리해 달라는 것으로 이해했습니다. 먼저 저장소 구조와 대화 로그 파일을 확인한 뒤, 현재 Docker 공식 문서 기준으로 답을 정리하고 로그도 남기겠습니다.
+```
+
+**Assistant Update**
+
+```text
+공식 문서 기준으로 `compose.yaml`이 현재 기본 파일명이고, `docker-compose.yml`은 하위 호환으로 남아 있는 상태라는 점을 확인했습니다. 저장소에서는 대화 로그 위치를 확인하고, 답변은 그 기준에 맞춰 정리하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+대화 로그 파일은 있고 워크트리는 현재 깨끗합니다. 로그 형식을 맞추기 위해 최근 기록만 보고 같은 형식으로 한 줄 추가하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+기록 형식은 기존에 `Turn` 단위로 사용자/업데이트/최종 답변을 그대로 남기는 구조입니다. 답변 문안을 확정한 뒤 같은 형식으로 현재 질문과 제 답변을 로그에 추가하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+답변 자체는 간단하지만, 질문 표현상 `Docker Compose`라는 기능과 `compose.yaml`이라는 파일명을 한 번 분리해서 설명하는 게 정확합니다. 그 정리와 현재 공식 권장사항을 함께 남기도록 로그를 갱신하겠습니다.
+```
+
+**Assistant**
+
+```text
+정확히 말하면 `Docker Compose`는 기능이고, `compose.yaml`은 그 기능이 읽는 기본 설정 파일 이름입니다. 그래서 비교 포인트는 “Compose를 쓰느냐”가 아니라 “파일명을 `docker-compose.yml` 대신 `compose.yaml`으로 두는 게 왜 좋으냐”에 가깝습니다.
+
+2026-05-06 기준 Docker 공식 문서는 `compose.yaml`을 기본 파일명으로 권장합니다. 장점은 성능이 아니라 `표준화` 쪽입니다.
+
+- 현재 공식 기본 이름입니다. `docker compose`가 기본적으로 찾는 canonical 이름이 `compose.yaml`이라 새 프로젝트에서 가장 자연스럽습니다.
+- 레거시 흔적을 줄입니다. `docker-compose.yml`은 예전 `docker-compose` v1 시대 이름이고, 지금은 하위 호환으로만 유지됩니다.
+- 문서/온보딩이 단순해집니다. 공식 예제, 명령어, override 관례가 `compose.yaml`, `compose.override.yaml` 기준이라 팀 내 설명이 덜 꼬입니다.
+- 파일 충돌 시 우선순위도 명확합니다. 둘 다 있으면 Docker는 `compose.yaml`을 우선합니다.
+
+반대로 실행 성능이나 기능 차이는 거의 없습니다. 즉, `compose.yaml`의 이점은 런타임 이득이 아니라 “최신 공식 표준에 맞춘다”는 점입니다. 새 프로젝트면 `compose.yaml`을 쓰는 편이 맞고, 기존 프로젝트가 이미 `docker-compose.yml`로 굳어 있고 CI/문서가 다 맞춰져 있으면 굳이 큰 비용 들여 바꿀 이유는 크지 않습니다.
+
+출처:
+- https://docs.docker.com/compose/intro/compose-application-model/
+- https://docs.docker.com/compose/how-tos/multiple-compose-files/merge/
+```
+
+### Turn 38
+
+**User**
+
+```text
+현재 컨테이너에서 요구사항에 맞게 구현되어있어?
+```
+
+**Assistant Update**
+
+```text
+요구사항 문서와 현재 컨테이너 구성을 먼저 대조해서, 구현 누락이나 동작 불일치를 확인하겠습니다. 코드와 문서를 읽고 필요하면 테스트/실행 경로도 점검한 뒤 바로 결론을 드리겠습니다.
+```
+
+**Assistant Update**
+
+```text
+문서 기준 요구사항은 확인했습니다. 이제 공개 API, 컨테이너 설정, 테스트 경로를 같이 읽어서 실제 구현이 문서와 맞는지 교차 검증하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+이제 문서상 주장과 실제 구현을 맞춰보는 단계입니다. 테스트와 컨테이너 상태를 확인하면서, 문서에 적힌 보장들이 실제 코드와 현재 실행 상태에서도 성립하는지 보겠습니다.
+```
+
+**Assistant Update**
+
+```text
+테스트와 Compose 상태는 정상입니다. 이제 실제 코드에서 요구사항 핵심인 idempotency, 상태 전이, 결과 만료 처리, Worker 연동 경계를 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+현재 떠 있는 컨테이너 자체도 확인하겠습니다. 로컬 포트로 실제 HTTP 요청을 보내서 Swagger, 헬스, 작업 생성/조회가 응답하는지 보겠습니다.
+```
+
+**Assistant Update**
+
+```text
+호스트에서 `localhost:8080` 접속은 실패했습니다. 이건 샌드박스 네트워크 제약일 수도 있고 앱이 아직 listen 하지 않는 상태일 수도 있어서, 컨테이너 내부와 로그를 직접 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+컨테이너 내부 HTTP는 살아 있습니다. 이제 실제 생성 요청과 조회를 한 번 흘려서, idempotency와 비동기 job 수명주기 경로가 현재 실행 중 컨테이너에서도 보이는지 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+생성 경로와 replay 경로는 현재 컨테이너에서 바로 확인됐습니다. 이제 같은 job의 상태 전이와 목록 노출을 확인해서 비동기 처리 루프가 실제로 돌고 있는지 보겠습니다.
+```
+
+**Assistant Update**
+
+```text
+실행 경로는 보이지만, 실제 Worker 호출은 현재 샘플 요청에서 `403/404`로 실패했습니다. 이게 코드 문제인지 입력 URL 문제인지 구분하려고, 컨테이너에 주입된 Worker 설정과 실제 endpoint 응답을 짧게 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+결론은 거의 나왔습니다. 현재 컨테이너는 떠 있고 API/테스트는 정상인데, 핵심 요구사항인 Mock Worker 연동이 현재 주입된 설정값 때문에 막히는 상태인지 라인 기준으로 정리하겠습니다.
+```
+
+**Assistant**
+
+```text
+아니요. 2026-05-06 기준 현재 컨테이너 상태만 보면, “대부분 구현되어 있음”은 맞지만 “요구사항을 충족한 상태”라고 보긴 어렵습니다.
+
+1. `Mock Worker` 연동이 현재 설정값으로 실제 동작하지 않습니다. [docker/compose.yaml](/Users/jhons/Downloads/assignment/docker/compose.yaml:30)와 [.env.example](/Users/jhons/Downloads/assignment/.env.example:1)에 들어간 `WORKER_BASE_URL`, `WORKER_CANDIDATE_NAME`, `WORKER_CANDIDATE_EMAIL`로 컨테이너를 띄우면, 컨테이너 내부에서 `POST https://dev.realteeth.ai/mock/auth/issue-key`가 `HTTP 403`과 `{"detail":"Candidate not allowed"}`를 반환했습니다. 그 결과 `POST /api/v1/image-jobs`는 생성 자체는 되지만 곧 `FAILED`와 `WORKER_BAD_REQUEST`로 끝납니다. 요구사항의 핵심인 “API key 발급 후 Mock Worker 처리 연동”이 현재 컨테이너에서는 성립하지 않습니다.
+
+2. 컨테이너용 Worker 설정 노출도 문서와 완전히 맞지 않습니다. [README.md](/Users/jhons/Downloads/assignment/README.md:122)는 `.env.example`을 참고해 Worker 관련 환경 변수를 쉽게 덮어쓸 수 있다고 설명하지만, 실제 compose는 [docker/compose.yaml](/Users/jhons/Downloads/assignment/docker/compose.yaml:25) 기준으로 `WORKER_BASE_URL`, `WORKER_CANDIDATE_NAME`, `WORKER_CANDIDATE_EMAIL`만 컨테이너에 주입합니다. 반면 앱은 [application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:33)에서 `WORKER_ISSUE_KEY_PATH`, `WORKER_PROCESS_PATH`, `WORKER_TIMEOUT_MS`까지 지원합니다. 즉 컨테이너 실행 기준으로는 문서가 말하는 “Worker 관련 env override” 범위가 실제보다 좁습니다.
+
+확인한 점도 있습니다. `./gradlew test jacocoTestReport`는 성공했고, `docker compose ps` 기준으로 `app`과 `postgres` 컨테이너는 올라와 있습니다. 컨테이너 내부에서 `GET /actuator/health`, `GET /v3/api-docs`, `POST /api/v1/image-jobs`와 같은 기본 API도 응답했습니다. 그래서 코드 골격과 컨테이너 기동 자체는 괜찮습니다. 막히는 지점은 현재 런타임 설정으로는 외부 Worker 인증이 되지 않는다는 점입니다.
+
+정리하면, 현재 컨테이너는 `API/DB/스케줄러/idempotency`까지는 구현돼 있지만, 요구사항의 핵심 외부 연동이 실제로 실패하므로 제출 상태 기준으로는 `아직 완전 충족 아님`이 맞습니다.
+```
+
+### Turn 39
+
+**User**
+
+```text
+process-path: ${WORKER_PROCESS_PATH:/process} 가 뭐야?
+```
+
+**Assistant Update**
+
+```text
+설정 한 줄의 의미와 실제 호출 URL까지 바로 연결해서 설명하겠습니다. 대화 로그도 같이 남기겠습니다.
+```
+
+**Assistant**
+
+```text
+[application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:36)의 `process-path: ${WORKER_PROCESS_PATH:/process}`는 Spring placeholder 문법입니다.
+
+- `WORKER_PROCESS_PATH`라는 환경 변수가 있으면 그 값을 사용합니다.
+- 없으면 기본값으로 `/process`를 사용합니다.
+
+즉 이 설정은 `worker.process-path`의 런타임 값을 정하는 줄입니다.
+
+이 프로젝트에서는 [RestWorkerClient.kt](/Users/jhons/Downloads/assignment/src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:22)에서 이 값을 `WORKER_BASE_URL`과 합쳐 실제 Worker 호출 URL을 만듭니다. 지금 기본 조합은:
+
+- `WORKER_BASE_URL=https://dev.realteeth.ai/mock`
+- `WORKER_PROCESS_PATH=/process`
+
+그래서 최종 호출 URL은 `https://dev.realteeth.ai/mock/process`가 됩니다.
+
+의도는 `base-url`과 `path`를 분리해서 환경마다 endpoint path를 바꿀 수 있게 하려는 것입니다. 예를 들어 Worker 경로가 달라지면 코드 수정 없이 env만 바꾸면 됩니다.
+```
+
+### Turn 40
+
+**User**
+
+```text
+요구사항에 따르면 그럼 /process 이게 맞아?
+```
+
+**Assistant Update**
+
+```text
+요구사항 문구와 현재 설정 조합을 바로 대조해 보겠습니다. 핵심은 `path` 자체가 맞는지보다 `base-url + path`의 최종 URL이 요구사항과 일치하는지입니다.
+```
+
+**Assistant**
+
+```text
+네, `현재 설정 방식에서는 /process가 맞습니다.` 다만 정확히는 `path 단독`이 아니라 `최종 URL` 기준으로 맞다고 보는 게 맞습니다.
+
+요구사항은 [docs/REQUIREMENTS.md](/Users/jhons/Downloads/assignment/docs/REQUIREMENTS.md:45) 기준으로 `POST /mock/process`를 요구합니다.
+
+현재 앱 설정은:
+
+- [application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:34) `WORKER_BASE_URL=https://dev.realteeth.ai/mock`
+- [application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:36) `WORKER_PROCESS_PATH=/process`
+
+그리고 [RestWorkerClient.kt](/Users/jhons/Downloads/assignment/src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:64)는 이 둘을 합쳐 URL을 만듭니다.
+
+그래서 최종 호출 URL은:
+
+- `https://dev.realteeth.ai/mock` + `/process`
+- `=> https://dev.realteeth.ai/mock/process`
+
+즉 요구사항의 `POST /mock/process`와 일치합니다.
+
+정리하면:
+
+- `base-url`에 이미 `/mock`가 들어있다면 `process-path=/process`가 맞습니다.
+- `base-url`가 `https://dev.realteeth.ai`였다면 그때는 `process-path=/mock/process`여야 맞습니다.
+
+즉 요구사항이 검사하는 건 `/process`라는 문자열 자체가 아니라 `최종 경로가 /mock/process인지`입니다.
+```
+
+### Turn 41
+
+**User**
+
+```text
+현재 기준이 제대로 되어있는지 확인해줘
+```
+
+**Assistant Update**
+
+```text
+현재 설정 기준이 요구사항과 맞는지 다시 실제 파일 기준으로 확인하겠습니다. `base-url`, `issue-key-path`, `process-path`, URL 조합 테스트까지 같이 보겠습니다.
+```
+
+**Assistant Update**
+
+```text
+지금 보이는 핵심 차이는 `process-path`보다 `issue-key-path` 기본값입니다. 실제 바인딩 타입과 컨테이너 주입값까지 한 번 더 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+테스트가 이 설정 오타를 잡는지도 같이 보겠습니다. 현재 보이는 위험은 “URI 조합 테스트는 통과해도 실제 기본 설정은 다른 값”일 수 있다는 점입니다.
+```
+
+**Assistant Update**
+
+```text
+설정 기본값을 직접 검증하는 테스트가 이미 있습니다. 이 기준이 지금도 맞는지 테스트로 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+기본값 검증 테스트 결과를 기다리는 중입니다. 이 테스트가 실패하면 현재 소스 기준은 이미 문서/요구사항과 어긋난다는 뜻입니다.
+```
+
+**Assistant Update**
+
+```text
+테스트가 바로 실패했습니다. 현재 소스 기준은 문서와 어긋나 있는 상태라서, 실패 지점을 한 줄로 확인해 답을 정리하겠습니다.
+```
+
+**Assistant**
+
+```text
+아니요. 현재 소스 기준은 제대로 안 되어 있습니다.
+
+핵심은 `process-path=/process`는 맞는데, `issue-key-path` 기본값이 잘못 바뀌어 있다는 점입니다.
+
+- 요구사항은 [docs/REQUIREMENTS.md](/Users/jhons/Downloads/assignment/docs/REQUIREMENTS.md:45) 기준으로 API key 발급 경로가 `/mock/auth/issue-key`여야 합니다.
+- 문서와 테스트도 전부 기본 상대 경로를 `/auth/issue-key`로 가정합니다. 예를 들어 [docs/decisions/008-worker-integration-and-retry.md](/Users/jhons/Downloads/assignment/docs/decisions/008-worker-integration-and-retry.md:16), [RestWorkerClientTests.kt](/Users/jhons/Downloads/assignment/src/test/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClientTests.kt:35), [AssignmentApplicationTests.kt](/Users/jhons/Downloads/assignment/src/test/kotlin/io/github/jho951/assignment/AssignmentApplicationTests.kt:28)가 전부 그 기준입니다.
+- 그런데 실제 현재 설정 파일은 [application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:35)에서 `issue-key-path: ${WORKER_ISSUE_KEY_PATH:mock_2e80116bf37a4505aac959068b5ca051}`로 되어 있습니다. 이 기본값은 `/auth/issue-key`가 아닙니다.
+
+그래서 현재 기본 조합은:
+
+- `WORKER_BASE_URL=https://dev.realteeth.ai/mock`
+- `WORKER_ISSUE_KEY_PATH` 미주입 시 기본값 `mock_2e80116bf37a4505aac959068b5ca051`
+
+이고, 최종 URL은 `https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051` 쪽으로 조합됩니다. 이건 요구사항의 `/mock/auth/issue-key`와 맞지 않습니다.
+
+추가로 컨테이너 기준도 안전하지 않습니다. [docker/compose.yaml](/Users/jhons/Downloads/assignment/docker/compose.yaml:25)는 `WORKER_ISSUE_KEY_PATH`를 컨테이너에 넘기지 않습니다. [.env.example](/Users/jhons/Downloads/assignment/.env.example:2)에는 올바른 값 `/auth/issue-key`가 있지만, compose에서 그 env를 실제로 주입하지 않기 때문에 컨테이너를 새로 빌드하면 현재 `application.yml`의 잘못된 기본값을 그대로 쓰게 됩니다.
+
+검증도 끝났습니다. `./gradlew test --tests io.github.jho951.assignment.AssignmentApplicationTests`를 실행했더니 [AssignmentApplicationTests.kt](/Users/jhons/Downloads/assignment/src/test/kotlin/io/github/jho951/assignment/AssignmentApplicationTests.kt:28)의 `shouldUseDocumentedDefaultWorkerIssueKeyPath()`가 실패했습니다. 즉 테스트 기준으로도 현재 기본 설정은 깨져 있습니다.
+
+정리하면:
+
+- `process-path=/process` 자체는 현재 기준으로 맞습니다.
+- 하지만 `issue-key-path` 기본값이 틀렸고, Compose도 그 override를 주입하지 않아서, 현재 기준 전체는 `제대로 안 되어 있다`가 맞습니다.
+```
+
+### Turn 42
+
+**User**
+
+```text
+issue-key를 그리고 헤더에 담아서 쓰는거지?
+```
+
+**Assistant Update**
+
+```text
+질문 의도는 맞습니다. 그리고 지금 설정에서 더 중요한 건 `issue-key-path` 자리에 key처럼 보이는 값이 들어가 있다는 점입니다. 코드 기준으로 흐름을 짧게 확인해서 설명하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+지금 질문의 핵심은 맞습니다. 그리고 그 기준으로 보면 현재 `application.yml`의 `issue-key-path` 값은 path가 아니라 key처럼 보이는 값이라 더 의심해야 합니다. 기록만 추가하고 답을 드리겠습니다.
+```
+
+**Assistant**
+
+```text
+네. 흐름은 그게 맞습니다.
+
+1. 먼저 `POST /mock/auth/issue-key`로 API key를 발급받습니다.
+2. 응답으로 받은 `apiKey` 값을 이후 요청 헤더 `X-API-KEY`에 담아 `POST /mock/process`를 호출합니다.
+
+현재 코드도 그렇게 되어 있습니다. [RestWorkerClient.kt](/Users/jhons/Downloads/assignment/src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:126)에서 `issueApiKey()`가 Worker에서 `apiKey`를 받아오고, [RestWorkerClient.kt](/Users/jhons/Downloads/assignment/src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:28), [RestWorkerClient.kt](/Users/jhons/Downloads/assignment/src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:48)에서 그 값을 `X-API-KEY` 헤더로 넣어 `process` 시작과 상태 조회에 사용합니다.
+
+그래서 중요한 구분은 이겁니다:
+
+- `issue-key-path`는 “key를 발급받으러 가는 URL path”
+- `apiKey`는 “발급받은 뒤 헤더에 넣는 실제 key 값”
+
+즉 `mock_2e80116bf37a4505aac959068b5ca051` 같은 값은 path 자리에 둘 값이 아니라, 발급 응답으로 받아서 헤더에 넣는 쪽에 가까운 모양입니다.
+```

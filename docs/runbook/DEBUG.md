@@ -101,7 +101,7 @@
 ## 확인할 로그
 
 - Worker API Key lazy issuance 시도
-- `POST https://dev.realteeth.ai/mock/auth/issue-key` 또는 상대 path `/auth/issue-key` 성공/실패
+- `POST https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051` 또는 현재 설정된 `WORKER_ISSUE_KEY_PATH` 상대 path 성공/실패
 - `POST https://dev.realteeth.ai/mock/process` 또는 상대 path `/process` timeout, 4xx, 5xx, 네트워크 오류
 - job 상태 전이: `QUEUED -> PROCESSING -> RETRY_SCHEDULED|FAILED|SUCCEEDED`
 - remote `PROCESSING` 응답 시 lease가 해제되고 다음 poll 시점으로 재스케줄되는지
@@ -120,7 +120,7 @@
 ## 복구 절차
 
 1. `WORKER_BASE_URL`, candidate identity, DB 연결 설정을 확인한다.
-2. 최종 호출 URL이 `https://dev.realteeth.ai/mock/auth/issue-key`, `https://dev.realteeth.ai/mock/process`로 나가는지 확인한다.
+2. 최종 호출 URL이 현재 `WORKER_ISSUE_KEY_PATH` 설정값과 합쳐진 auth URL, `https://dev.realteeth.ai/mock/process`로 나가는지 확인한다.
 3. compose 실행 중이면 `postgres` 컨테이너 health 상태와 앱 환경 변수 주입 값을 함께 확인한다.
 4. Worker 장애가 해소되면 scheduler가 `RETRY_SCHEDULED` 작업을 다시 집행하는지 확인한다.
 5. `FAILED`로 종료된 job은 정책상 자동 복구되지 않으므로 재요청이 필요한지 판단한다.

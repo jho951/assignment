@@ -12,6 +12,7 @@
 - `Idempotency-Key`는 trim 후 `1..128`자, 영문 대소문자/숫자/`.`/`_`/`-`만 허용하고, 같은 key+같은 body는 replay, 같은 key+다른 body는 `409`, 같은 body+다른 key는 새 job으로 처리한다.
 - 구현 순서는 `ImageInputType`, `ImageJob`, `JobStatus`, `JobStatusTransitionPolicy`, `ImageJobRepository`, `RequestHashService`, `ImageJobCommandService`, `ImageJobQueryService`, `ImageJobController`, `WorkerClient`, `RestWorkerClient`, `JobProcessor`, `JobProcessingScheduler`, `JobRecoveryService`, `JobCleanupScheduler`를 따른다.
 - Worker API Key는 애플리케이션 startup 시 미리 발급하지 않고 최초 처리 시점에 lazy issuance 해야 한다.
+- 컨테이너 예제와 `.env.example`는 `WORKER_ISSUE_KEY_PATH`를 노출해 auth path override를 image rebuild 없이 바꿀 수 있어야 한다.
 - Worker 호출은 timeout 5초, 최대 3회 시도, `2초 -> 10초 -> 30초` backoff, `401` 재발급 재시도 정책을 따라야 한다.
 - executor thread는 한 번 claim한 job에 대해 remote call 한 번만 수행하고, remote status 가 계속 `PROCESSING`이면 lease를 해제한 뒤 다음 scheduler tick 으로 넘겨야 한다.
 - 작업 상태는 `QUEUED`, `PROCESSING`, `RETRY_SCHEDULED`, `SUCCEEDED`, `FAILED`만 사용하고 terminal state 이후 전이를 허용하지 않는다.

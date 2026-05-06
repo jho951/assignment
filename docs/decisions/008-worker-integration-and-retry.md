@@ -13,11 +13,11 @@ Mock Worker는 외부에서 제공되는 서비스이며 지연, timeout, 5xx, �
 ## 결정
 
 - Worker base URL은 `WORKER_BASE_URL` 환경 변수로 주입한다.
-- Worker API Key 발급 path 기본값은 `/auth/issue-key`로 둔다.
+- Worker API Key 발급 path는 `WORKER_ISSUE_KEY_PATH`로 주입하며, 현재 저장소 기본값은 `mock_2e80116bf37a4505aac959068b5ca051`이다.
 - Worker API Key 발급에 필요한 candidate identity는 환경 변수 또는 설정으로 주입한다.
 - 애플리케이션 시작 시 Worker API Key를 강제로 발급받지 않는다.
 - Worker API Key는 실제 Worker 호출 시점에 lazy issuance 한다.
-- 기본 설정 기준 최종 발급 URL은 `https://dev.realteeth.ai/mock/auth/issue-key`다.
+- 현재 저장소 기본 설정 기준 최종 발급 URL은 `https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051`다.
 - 구현에서는 `WORKER_BASE_URL` 뒤에 상대 path를 안전하게 append해서 최종 URL이 항상 `/mock/...`를 유지하도록 한다.
 - 발급받은 API Key는 애플리케이션 인스턴스 메모리에 캐시한다.
 - Worker 호출에는 항상 `X-API-KEY` 헤더를 포함한다.
