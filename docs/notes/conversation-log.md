@@ -2119,3 +2119,215 @@ issue-key를 그리고 헤더에 담아서 쓰는거지?
 
 즉 `mock_2e80116bf37a4505aac959068b5ca051` 같은 값은 path 자리에 둘 값이 아니라, 발급 응답으로 받아서 헤더에 넣는 쪽에 가까운 모양입니다.
 ```
+
+### Turn 43
+
+**User**
+
+```text
+issue-key-path: ${WORKER_ISSUE_KEY_PATH:mock_2e80116bf37a4505aac959068b5ca051} 이렇게 수정하고 다시 올려줘
+```
+
+**Assistant Update**
+
+```text
+`issue-key-path` 기본값을 바꾸고, 그 변경을 반영한 문서와 대화 로그까지 같이 정리하겠습니다. 먼저 설정이 들어있는 파일과 현재 작업 트리 상태를 확인한 뒤 바로 수정하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+지금 워크트리상 [application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:35)은 이미 말씀하신 값으로 바뀌어 있습니다. 의도는 `GitHub에 다시 올리기`가 아니라 `Docker 쪽 반영`으로 이해하고, 관련 문서와 로그를 맞춘 뒤 필요한 경우 커밋/푸시까지 이어가겠습니다.
+```
+
+### Turn 44
+
+**User**
+
+```text
+도커에
+```
+
+**Assistant Update**
+
+```text
+설정값만 바꿔 두면 `Docker 기준 설명`과 `.env.example`가 바로 어긋납니다. 지금은 `application.yml`만 바뀌어 있어서, 컨테이너 실행 기준으로 보이는 값도 같이 맞추겠습니다.
+```
+
+**Assistant Update**
+
+```text
+값 형태를 보니 `path`라기보다 발급된 키처럼 보입니다. 실제 코드에서 `issue-key-path`를 URL 조합에 어떻게 쓰는지 먼저 확인해서, 문서를 무엇으로 맞춰야 할지 결정하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+실제 코드 사용처를 보니 `issue-key-path`는 그대로 URL path로 붙습니다. 그래서 지금 값은 컨테이너에도 전달할 수는 있지만, 최종 호출 URL이 `.../mock/mock_...`가 되는 형태라 의미상 꽤 위험합니다. 요청하신 대로 Docker 반영은 하되, 이 점은 결과에 명시하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+수정 범위는 정했습니다. `Docker compose/.env/README/runbook/ADR/plan`에 `WORKER_ISSUE_KEY_PATH` 노출과 현재 기본값을 맞추고, 과제 요구사항 파일에는 컨테이너 예제가 이 override를 드러낸다는 점만 추가하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+이제 파일을 수정합니다. 설정이 들어가는 경로와 설명 문서가 한 번에 맞도록 `compose/.env/README/ADR/runbook/plan`을 같이 건드리겠습니다.
+```
+
+**Assistant Update**
+
+```text
+문서와 Docker 예제는 반영했습니다. 다음은 변경 내용이 의도대로 들어갔는지 확인하고, 최소 회귀 검증으로 테스트를 한 번 돌리겠습니다.
+```
+
+**Assistant Update**
+
+```text
+테스트를 돌리는 중입니다. 지금까지는 컴파일 단계는 통과했고, 실제 테스트 태스크 종료만 확인하면 됩니다.
+```
+
+**Assistant Update**
+
+```text
+테스트 하나가 새 기본값 때문에 실패했습니다. 문서와 설정은 맞았고, 남은 일은 기본 `issue-key-path` 기대값을 검증하는 테스트 한 줄을 현재 값으로 맞추는 것입니다.
+```
+
+**Assistant Update**
+
+```text
+기본 설정 검증 테스트도 같이 맞춥니다. 이건 설정 회귀를 잡는 테스트라 그대로 두는 편이 맞고, 기대값만 현재 문서화된 기본값으로 바꾸겠습니다.
+```
+
+**Assistant Update**
+
+```text
+컴파일까지 다시 통과했습니다. 테스트 실행 종료 상태만 확인하고, 그다음 대화 로그를 마지막으로 정리하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+변경 자체는 끝났고 테스트도 통과했습니다. 마지막으로 이번 요청과 작업 내용을 대화 로그에 이어 붙인 뒤 결과를 정리하겠습니다.
+```
+
+**Assistant**
+
+```text
+Docker 쪽 반영까지 끝냈습니다.
+
+- [application.yml](/Users/jhons/Downloads/assignment/src/main/resources/application.yml:35), [.env.example](/Users/jhons/Downloads/assignment/.env.example:2), [docker/compose.yaml](/Users/jhons/Downloads/assignment/docker/compose.yaml:31)에 `WORKER_ISSUE_KEY_PATH` 기본값/주입값을 `mock_2e80116bf37a4505aac959068b5ca051`로 맞췄습니다.
+- 문서도 같이 갱신했습니다. [README.md](/Users/jhons/Downloads/assignment/README.md:244), [docs/runbook/DEBUG.md](/Users/jhons/Downloads/assignment/docs/runbook/DEBUG.md:104), [docs/REQUIREMENTS.md](/Users/jhons/Downloads/assignment/docs/REQUIREMENTS.md:149), [docs/decisions/008-worker-integration-and-retry.md](/Users/jhons/Downloads/assignment/docs/decisions/008-worker-integration-and-retry.md:16), [docs/decisions/009-container-and-runtime-config.md](/Users/jhons/Downloads/assignment/docs/decisions/009-container-and-runtime-config.md:21), [docs/decisions/010-openapi-and-swagger-ui.md](/Users/jhons/Downloads/assignment/docs/decisions/010-openapi-and-swagger-ui.md:25), [prompts/plans/001-implementation-plan.md](/Users/jhons/Downloads/assignment/prompts/plans/001-implementation-plan.md:15)에 Docker 기준 설명을 맞췄습니다.
+- 기본값 검증 테스트도 [AssignmentApplicationTests.kt](/Users/jhons/Downloads/assignment/src/test/kotlin/io/github/jho951/assignment/AssignmentApplicationTests.kt:28)에 맞춰 수정했고, `./gradlew test`가 다시 통과했습니다.
+
+다만 이 값은 코드상 `issue-key-path`로 URL에 그대로 붙습니다. 그래서 override 없이 쓰면 최종 auth 호출 URL은 `https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051`가 됩니다. 즉 “발급받은 key를 헤더에 넣는 구조”와는 별개로, 현재 기본값은 path가 아니라 key처럼 보이는 값이라는 점은 그대로 남아 있습니다. Git push나 이미지 publish는 하지 않았고, 이번 반영은 저장소의 Docker 설정과 문서 정합성까지 맞춘 상태입니다.
+```
+
+### Turn 45
+
+**User**
+
+```text
+- POST /mock/auth/issue-key로 apiKey를 발급받고
+  - 그 apiKey를 X-API-KEY 헤더에 담아서 POST /mock/process를 호출합니다.
+
+  현재 코드도 그렇게 구현돼 있습니다. src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:126에서 key를 발급받고, src/main/kotlin/io/github/jho951/assignment/job/worker/
+  RestWorkerClient.kt:28, src/main/kotlin/io/github/jho951/assignment/job/worker/RestWorkerClient.kt:48에서 X-API-KEY 헤더로 넣어 씁니다.
+
+  그래서 구분이 중요합니다:
+
+  - issue-key-path는 “key를 받으러 가는 경로”
+  - apiKey는 “받은 뒤 헤더에 넣는 실제 값”
+
+  즉 지금 src/main/resources/application.yml:35의 mock_2e80116bf37a4505aac959068b5ca051 같은 값은 path 자리에 둘 값이 아니라, 형태상 apiKey 쪽에 더 가깝습니다.
+ 이 구조대로 되어있는거야?
+```
+
+**Assistant Update**
+
+```text
+현재 구현이 실제로 그 구조인지 코드 기준으로 다시 확인하겠습니다. 발급 호출, 헤더 주입, 설정 바인딩 세 군데만 짧게 보고 바로 답하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+구현 확인은 끝났습니다. 현재 소스 기준으로는 말씀하신 구조대로 되어 있습니다. 대화 로그만 한 줄 추가하고 바로 결론만 답하겠습니다.
+```
+
+### Turn 46
+
+**User**
+
+```text
+그럼 요구사항대로 되어있고 이대로 하면 채점관이 문제 없이 채점 할 수 있어?
+```
+
+**Assistant Update**
+
+```text
+채점 가능 상태인지 보려면 현재 소스와 문서가 실제로 다시 맞아 있는지부터 확인해야 합니다. 설정, compose, 테스트, 요구사항 문서를 같이 보고 감점 가능성이 있으면 바로 짚겠습니다.
+```
+
+**Assistant Update**
+
+```text
+지금 바로 보이는 위험은 두 가지입니다. `docker/compose.yaml`이 요구사항과 다른 `WORKER_ISSUE_KEY_PATH`를 주입하고 있고, 그 줄의 변수 치환 문법도 한 번 실제로 파싱되는지 확인하는 편이 안전합니다.
+```
+
+**Assistant Update**
+
+```text
+결론은 바로 낼 수 있습니다. JVM 기본 설정은 맞지만, 채점관이 실제로 쓸 컨테이너 경로는 지금 상태로는 막혀 있습니다. 기록만 추가한 뒤 핵심 문제만 정리하겠습니다.
+```
+
+**User**
+
+```text
+아니 요구사항에서 컨테이너에서 그대로 작동되게 할렴녀       WORKER_ISSUE_KEY_PATH: ${WORKER_ISSUE_KEY_PATH:mock_2e80116bf37a4505aac959068b5ca051} 이렇게 넣어야하는거 아니야?
+```
+
+**Assistant**
+
+```text
+컨테이너에서 application 기본값을 덮어쓰려는 목적만 보면 맞습니다. 실제 현재 저장소에도 docker/compose.yaml 쪽에는 `WORKER_ISSUE_KEY_PATH: ${WORKER_ISSUE_KEY_PATH:mock_2e80116bf37a4505aac959068b5ca051}`가 이미 들어 있습니다.
+
+다만 코드에서는 이 값을 API key 자체가 아니라 issue-key 발급 URL path로 사용합니다. 그래서 현재 base URL `https://dev.realteeth.ai/mock`와 합치면 최종 호출 URL이 `https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051`가 됩니다. 요구사항의 `POST /mock/auth/issue-key`를 기준으로 보면, 컨테이너에서 env를 주입하는 것과 별개로 값 의미는 `/auth/issue-key`가 더 자연스럽고, 지금 token처럼 보이는 기본값은 path 의미와 충돌합니다.
+```
+
+**User**
+
+```text
+그럼 이대로 올리면 체점관이 문제 없이 사용할 수 있어?
+```
+
+**Assistant**
+
+```text
+안전하다고 말하긴 어렵습니다. 로컬 기본 설정은 `application.yml`에서 `/auth/issue-key`라 괜찮지만, 평가자가 요구사항대로 `docker compose`로 올리면 compose가 `WORKER_ISSUE_KEY_PATH=mock_2e80116bf37a4505aac959068b5ca051`를 주입해서 최종 auth 호출 URL이 `https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051`로 바뀝니다.
+
+즉 현재 상태는 비컨테이너 실행과 컨테이너 실행의 동작이 다르고, 채점관이 컨테이너 기준으로 검증하면 첫 API key 발급 호출부터 실패할 가능성이 있습니다. 채점 안정성을 우선하면 compose/.env/문서를 `/auth/issue-key` 기준으로 다시 맞추는 쪽이 안전합니다.
+```
+
+**User**
+
+```text
+그럼 그렇게 수정하면 체점관이 문제 없이 사용할 수 있어?
+```
+
+**Assistant**
+
+```text
+`WORKER_ISSUE_KEY_PATH`를 `/auth/issue-key` 기준으로 다시 맞추면 URL mismatch 하나는 해소됩니다. 다만 그것만으로 “채점관이 문제 없이 사용한다”고 단정할 수는 없습니다.
+
+이미 확인된 다른 리스크가 하나 더 있습니다. [docs/notes/conversation-log.md](/Users/jhons/Downloads/assignment/docs/notes/conversation-log.md:1927)에 남겨둔 것처럼, 현재 기본 `WORKER_CANDIDATE_NAME`, `WORKER_CANDIDATE_EMAIL`로는 실제 `POST https://dev.realteeth.ai/mock/auth/issue-key`가 `403 Candidate not allowed`를 반환했던 이력이 있습니다. 그래서 path만 고쳐도 candidate 기본값이 계속 거절되면 채점관 컨테이너 실행은 여전히 실패할 수 있습니다.
+```
+
+**User**
+
+```text
+POST /auth/issue-key 이건 mock 서버라 내가 손대는게 아니잖아
+```

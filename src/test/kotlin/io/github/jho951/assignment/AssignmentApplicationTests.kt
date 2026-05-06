@@ -25,7 +25,6 @@ class AssignmentApplicationTests {
 
     @Test
     fun shouldUseDocumentedDefaultWorkerIssueKeyPath() {
-        assertThat(workerProperties.issueKeyPath)
-            .isEqualTo("mock_2e80116bf37a4505aac959068b5ca051")
+        assertThat(workerProperties.issueKeyPath).isEqualTo("/auth/issue-key")
     }
 }

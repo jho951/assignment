@@ -241,8 +241,8 @@ GET /api/v1/image-jobs?page=0&size=20&status=SUCCEEDED
 
 - Mock Worker API Key는 코드에 하드코딩하지 않고 설정값과 런타임 메모리 캐시로만 관리합니다.
 - 애플리케이션 startup 시 Worker API Key를 미리 발급하지 않고, 최초 job 처리 시 lazy하게 발급합니다.
-- 현재 저장소 기본 `WORKER_ISSUE_KEY_PATH` 값은 `mock_2e80116bf37a4505aac959068b5ca051`이며, override 하지 않으면 기본 최종 URL은 `https://dev.realteeth.ai/mock/mock_2e80116bf37a4505aac959068b5ca051`입니다.
-- 컨테이너 실행에서도 `docker/compose.yaml`이 `WORKER_ISSUE_KEY_PATH`를 그대로 주입하므로, 필요하면 `.env` 또는 쉘 환경 변수로 다른 상대 path를 덮어쓸 수 있습니다.
+- 기본 API Key 발급 path는 `/auth/issue-key`이며 기본 최종 URL은 `https://dev.realteeth.ai/mock/auth/issue-key`입니다.
+- 컨테이너 실행에서도 `docker/compose.yaml`이 `WORKER_ISSUE_KEY_PATH`, `WORKER_PROCESS_PATH`, `WORKER_TIMEOUT_MS`를 그대로 주입하므로, 필요하면 `.env` 또는 쉘 환경 변수로 Worker 경로와 timeout을 덮어쓸 수 있습니다.
 - 최초 호출 시 key를 발급하고, `401` 응답 시 key를 폐기한 뒤 1회 재발급 후 즉시 재시도합니다.
 - timeout은 5초, 일반 재시도 상한은 3회입니다.
 - Worker 장애는 job 상태와 오류 코드로 표현합니다.
@@ -425,7 +425,9 @@ polling 방식은 구조가 단순하고, 서버가 작업 상태를 일관되�
 | 변수                           | 설명                         |
 |------------------------------|----------------------------|
 | `WORKER_BASE_URL`            | 외부 Mock Worker base URL    |
-| `WORKER_ISSUE_KEY_PATH`      | Worker API Key 발급 상대 path override |
+| `WORKER_ISSUE_KEY_PATH`      | Worker API Key 발급 상대 path |
+| `WORKER_PROCESS_PATH`        | Worker 처리 시작/상태 조회 상대 path |
+| `WORKER_TIMEOUT_MS`          | Worker HTTP timeout (ms)     |
 | `WORKER_CANDIDATE_NAME`      | API Key 발급용 candidate name |
 | `WORKER_CANDIDATE_EMAIL`     | API Key 발급용 email          |
 | `SPRING_DATASOURCE_URL`      | PostgreSQL 또는 로컬 DB 연결 주소  |

@@ -149,7 +149,8 @@
   - `WORKER_BASE_URL`과 Worker path가 합쳐질 때 최종 URL이 `.../mock/...`로 유지되도록 구현한다.
 - 컨테이너 실행 방식과 런타임 구성: `docs/decisions/009-container-and-runtime-config.md`
   - 구현 산출물: `docker/Dockerfile`, `docker/compose.yaml`, `.env.example`
-  - 컨테이너 예제는 `WORKER_ISSUE_KEY_PATH` override도 노출해 image rebuild 없이 Worker auth path를 바꿀 수 있어야 한다.
+  - 컨테이너 예제는 `WORKER_ISSUE_KEY_PATH`, `WORKER_PROCESS_PATH`, `WORKER_TIMEOUT_MS` override도 노출해 image rebuild 없이 Worker 연동 설정을 바꿀 수 있어야 한다.
+  - `docker compose -f docker/compose.yaml config`가 성공해야 하며, compose 기본값은 애플리케이션 기본 Worker 경로와 일치해야 한다.
 - 우리 서버 공개 API Swagger 노출과 Mock Worker 외부 OpenAPI 참조 방식: `docs/decisions/010-openapi-and-swagger-ui.md`
 - Java 단계의 Lombok 사용 범위와 제거 시점: `docs/decisions/011-lombok-for-boilerplate-reduction.md`, `docs/decisions/014-kotlin-migration-strategy-and-guardrails.md`
 - single-step `PROCESSING` continuation, interrupt 복구, `attemptCount` 의미: `docs/decisions/012-processing-attempt-deadline-and-interrupt-recovery.md`

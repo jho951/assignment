@@ -22,7 +22,7 @@ Mock Worker는 외부에서 제공되는 서비스이며, 실제 연동 스펙�
 - 우리 서버 Swagger에는 `api/v1/image-jobs` 계열 공개 API만 노출한다.
 - Mock Worker API는 우리 서버 Swagger에 포함하지 않고, 외부 제공 문서를 참조한다.
 - Worker 경로 기본값은 base URL 기준 상대 경로로 관리한다.
-  - API Key 발급: 현재 저장소 기본값은 `mock_2e80116bf37a4505aac959068b5ca051`이며, 실제 환경에 맞는 상대 path는 `WORKER_ISSUE_KEY_PATH`로 override 한다.
+  - API Key 발급: `/auth/issue-key`
   - 처리 시작 및 상태 조회: `/process`, `/process/{jobId}`
 
 ## 이유

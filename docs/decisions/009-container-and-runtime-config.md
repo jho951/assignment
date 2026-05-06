@@ -18,7 +18,8 @@ Mock Worker는 현재 저장소에 구현체가 포함되지 않으므로 외부
 - 저장소에는 예제 환경 변수 파일 `.env.example`를 포함한다.
 - Mock Worker는 compose 내부 서비스가 아니라 외부 서비스로 본다.
 - Mock Worker 주소는 `WORKER_BASE_URL` 환경 변수로 주입한다.
-- compose와 `.env.example`는 `WORKER_ISSUE_KEY_PATH` override도 함께 노출한다.
+- compose와 `.env.example`는 `WORKER_ISSUE_KEY_PATH`, `WORKER_PROCESS_PATH`, `WORKER_TIMEOUT_MS` override도 함께 노출한다.
+- compose 환경 변수 기본값은 애플리케이션 기본 Worker 경로와 일치해야 하며, `docker compose ... config`가 성공하는 문법을 유지한다.
 - 평가자는 별도 유료 계정 없이 애플리케이션과 PostgreSQL을 실행할 수 있어야 한다.
 - README에는 Mock Worker가 저장소에 포함되지 않은 외부 제공 서비스라는 점을 명시한다.
 - README에는 Worker가 꺼져 있어도 애플리케이션은 기동되며, 실제 job 처리 시점에만 Worker 연결이 필요하다고 명시한다.
