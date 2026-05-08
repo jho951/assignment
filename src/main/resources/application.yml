@@ -30,13 +30,15 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-worker:
-  base-url: ${WORKER_BASE_URL:https://dev.realteeth.ai/mock}
-  issue-key-path: ${WORKER_ISSUE_KEY_PATH:/auth/issue-key}
-  process-path: ${WORKER_PROCESS_PATH:/process}
-  timeout-ms: ${WORKER_TIMEOUT_MS:5000}
-  candidate-name: ${WORKER_CANDIDATE_NAME:이장호}
-  candidate-email: ${WORKER_CANDIDATE_EMAIL:jho951@naver.com}
+brokerage:
+  base-url: ${BROKERAGE_BASE_URL:https://brokerage.example}
+  token-path: ${BROKERAGE_TOKEN_PATH:/oauth2/token}
+  order-path: ${BROKERAGE_ORDER_PATH:/v1/orders}
+  order-status-path: ${BROKERAGE_ORDER_STATUS_PATH:/v1/orders/{orderId}}
+  timeout-ms: ${BROKERAGE_TIMEOUT_MS:5000}
+  app-key: ${BROKERAGE_APP_KEY:demo-app-key}
+  app-secret: ${BROKERAGE_APP_SECRET:demo-app-secret}
+  client-id: ${BROKERAGE_CLIENT_ID:assignment-client}
 
 jobs:
   max-attempts: ${JOB_MAX_ATTEMPTS:3}

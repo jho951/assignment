@@ -1,15 +1,16 @@
 # 초기 설정 프롬프트
 
-이 프로젝트는 Spring Boot 기반 이미지 처리 작업 오케스트레이션 서버 과제입니다.
-코드를 바로 작성하지 말고, 먼저 요구사항과 기존 ADR을 기준으로 구현 계획을 세웁니다.
+이 프로젝트는 Spring Boot 기반 비동기 증권 주문 오케스트레이션 서버입니다.
+코드를 바로 작성하지 말고, 먼저 요구사항과 현재 활성 ADR을 기준으로 구현 계획을 세웁니다.
 공개 API가 필요한 작업이면 구현 전에 `docs/api/README.md`에 API 계약 초안을 먼저 문서화합니다.
 
 ## 반드시 먼저 읽을 문서
 
 - `docs/REQUIREMENTS.md`
-- `docs/decisions/`
+- `docs/decisions/015-java-codebase-and-brokerage-order-integration.md`
 - `README.md`
 - `docs/api/README.md`
+- `docs/runbook/DEBUG.md`
 - `AGENTS.md`
 - `build.gradle`
 
@@ -21,7 +22,7 @@
 - 명시적으로 제외된 범위
 - 구현자가 결정해야 하는 미결정 항목
 - 이미 ADR로 결정된 항목과 아직 남은 미결정 항목
-- 외부 Mock Worker 연동에서 필요한 가정
+- 외부 증권사 API 연동에서 필요한 가정
 - 평가자가 확인할 가능성이 높은 항목
 
 ## 2. 핵심 설계 결정 후보
@@ -29,44 +30,39 @@
 아래 항목별로 지금 결정해야 할 것과 구현 중 검증할 것을 나눕니다.
 
 - 공개 API 설계
-- 공개 API를 Mock Worker 실제 계약과 어떻게 맞출지
-- 이미지 데이터 표현 방식
+- 공개 API를 외부 증권사 실제 계약과 어떻게 분리할지
+- 주문 요청 표현 방식
 - 작업 상태 모델
 - 상태 전이 규칙
 - 비허용 상태 전이
 - 중복 요청 판별 방식
 - 저장소 선택
 - 비동기 실행 방식
-- 외부 Mock Worker 호출 방식
+- 외부 증권사 API 호출 방식
 - 처리 보장 모델
-- API Key 발급, 캐시, 재발급 수명주기
-- 앱 startup과 Worker 의존성을 분리하는 방식
+- access token 발급, 캐시, 재발급 수명주기
+- 앱 startup과 외부 증권사 의존성을 분리하는 방식
 - timeout/retry/backoff 정책
 - 서버 재시작 시 복구 방식
 - 목록 조회의 정렬, 페이징, 필터링 정책
 - 테스트 전략
 - 컨테이너 실행 방식
 - 런타임 환경 변수와 외부 의존성 명시 방식
-- 외부 Mock Worker OpenAPI 문서를 어떤 기준으로 참조할지
-- 우리 서버 공개 API용 Swagger를 노출할지와 노출 범위
-- `docker/Dockerfile`, `docker/compose.yaml`, `.env.example` 같은 제출 산출물 포함 여부
 
 ## 3. ADR 후보 식별
 
 중요한 기술 선택은 ADR로 기록합니다.
 다음 주제는 ADR 후보로 반드시 검토합니다.
 
-- API 및 이미지 요청 형식
+- API 및 주문 요청 형식
 - 상태 모델과 상태 전이
 - 저장소 및 재시작 복구 전략
 - 중복 요청 처리 전략
-- 외부 Worker 연동과 재시도 정책
+- 외부 증권사 연동과 재시도 정책
 - 처리 보장 모델
-- Mock Worker API Key 수명주기와 보안 관리
+- access token 수명주기와 보안 관리
 - 컨테이너 실행 구성
-- Worker 장애 시에도 앱이 기동되어야 한다는 런타임 가정
-- Mock Worker OpenAPI 기준 사용 방식
-- 우리 서버 Swagger 노출 방식
+- 외부 API 장애 시에도 앱이 기동되어야 한다는 런타임 가정
 
 ## 4. 구현 계획
 
@@ -77,7 +73,7 @@
 3. Job 도메인 모델과 상태 전이 구현
 4. 저장소 및 중복 요청 처리 구현
 5. 비동기 작업 실행기 구현
-6. Mock Worker 연동 구현
+6. 증권사 API 연동 구현
 7. 재시도 및 복구 로직 구현
 8. 테스트 작성
 9. README, API 문서, 런북 정리
@@ -94,5 +90,3 @@
 - 테스트 계획
 - 리스크와 완화 전략
 - REQUIREMENTS와 ADR 동기화 체크
-
-코드 작성은 이 계획이 끝난 뒤 시작합니다.

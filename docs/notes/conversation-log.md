@@ -2284,6 +2284,107 @@ Docker 쪽 반영까지 끝냈습니다.
 결론은 바로 낼 수 있습니다. JVM 기본 설정은 맞지만, 채점관이 실제로 쓸 컨테이너 경로는 지금 상태로는 막혀 있습니다. 기록만 추가한 뒤 핵심 문제만 정리하겠습니다.
 ```
 
+### Turn 47
+
+**User**
+
+```text
+그럼 체점관이 사용할 수 있게 수정해
+```
+
+**Assistant Update**
+
+```text
+채점관 기준으로 막히는 부분은 `compose`와 그에 맞물린 env/doc 정합성입니다. 먼저 현재 관련 파일만 확인하고, 바로 요구사항 기준으로 되돌린 뒤 `docker compose config`와 테스트로 닫겠습니다.
+```
+
+**Assistant Update**
+
+```text
+편집 범위는 작습니다. `compose` 기본값을 애플리케이션 기본값과 같게 맞추고, 채점 경로에서 중요한 “Compose가 실제로 파싱 가능해야 한다”는 점을 요구사항/ADR/계획 문서에 한 줄씩 고정하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+수정은 끝났습니다. 이제 채점관 경로 그대로 `docker compose config`가 열리는지 먼저 확인하고, 그 다음 회귀로 테스트를 다시 돌리겠습니다.
+```
+
+**Assistant Update**
+
+```text
+검증은 끝났습니다. `docker compose config`와 `./gradlew test` 둘 다 통과해서, 최소한 채점관의 진입 단계에서 바로 막히는 문제는 제거됐습니다. 로그만 마저 반영하고 결과를 정리하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+수정은 통과했지만 워크트리에 이전 배치에서 남은 문서 변경이 더 있습니다. 최종 상태를 잘못 설명하지 않으려면, 실제 diff를 한 번 훑어보고 이번 요구사항과 충돌하는 잔여 변경이 없는지 확인하겠습니다.
+```
+
+**Assistant Update**
+
+```text
+남은 상태는 정리됐습니다. 현재 저장소 내부 기준으로는 설정/문서/테스트 정합성이 다시 맞고, 채점관이 가장 먼저 밟을 `docker compose` 진입 경로도 열렸습니다. 대화 로그에 이번 수정과 검증 결과만 이어 붙이겠습니다.
+```
+
+**Assistant**
+
+```text
+채점관이 바로 사용할 수 있도록 컨테이너 경로를 요구사항 기준으로 수정했습니다.
+
+- [docker/compose.yaml](/Users/jhons/Downloads/assignment/docker/compose.yaml:31)의 `WORKER_ISSUE_KEY_PATH`를 Compose가 실제로 파싱 가능한 문법 `${WORKER_ISSUE_KEY_PATH:-/auth/issue-key}`로 고쳤고, 기본값도 요구사항과 같은 `/auth/issue-key`로 맞췄습니다.
+- [.env.example](/Users/jhons/Downloads/assignment/.env.example:2)도 `/auth/issue-key`로 되돌려 컨테이너 예제와 애플리케이션 기본 설정이 같아지도록 맞췄습니다.
+- 문서 정합성도 함께 고정했습니다. [docs/REQUIREMENTS.md](/Users/jhons/Downloads/assignment/docs/REQUIREMENTS.md:152), [docs/decisions/009-container-and-runtime-config.md](/Users/jhons/Downloads/assignment/docs/decisions/009-container-and-runtime-config.md:21), [prompts/plans/001-implementation-plan.md](/Users/jhons/Downloads/assignment/prompts/plans/001-implementation-plan.md:15)에 compose 기본값은 app 기본값과 일치해야 하고 `docker compose -f docker/compose.yaml config`를 통과해야 한다는 점을 명시했습니다.
+
+검증도 했습니다. `docker compose -f docker/compose.yaml config`가 성공했고, resolve된 env에서도 `WORKER_ISSUE_KEY_PATH: /auth/issue-key`가 확인됐습니다. `./gradlew test`도 통과했습니다.
+
+즉 지금은 저장소 자체 때문에 채점관이 시작 단계에서 막히는 문제는 제거됐습니다. 다만 실제 Mock Worker 외부 서비스 상태나 candidate 허용 여부 같은 외부 조건까지 여기서 보장할 수는 없습니다.
+```
+
+### Turn 48
+
+**User**
+
+```text
+그럼 문제 없는거지? 이제?
+```
+
+**Assistant Update**
+
+```text
+현재 기준에서 남은 리스크만 분리해서 답하겠습니다. 대화 로그를 반영한 뒤 결론만 짧게 정리하겠습니다.
+```
+
+**Assistant**
+
+```text
+저장소 기준으로는 큰 문제는 정리됐습니다.
+
+지금 확인된 범위에서는 `docker compose -f docker/compose.yaml config`가 통과하고, `./gradlew test`도 통과해서, 이전처럼 설정 때문에 채점관이 바로 막히는 상태는 아닙니다. 그래서 `코드/설정/문서 정합성` 관점에서는 이제 제출 가능한 쪽에 가깝습니다.
+
+다만 100% 단정은 못 합니다. 남는 변수는 저장소 밖에 있습니다.
+- 외부 Mock Worker가 실제로 살아 있는지
+- 현재 candidate 정보가 실제로 허용되는지
+
+즉, `저장소 내부 문제는 정리됐다`가 정확한 표현입니다. 원하면 마지막으로 제가 `docker compose up` 기준 실제 기동 검증까지 이어서 보겠습니다.
+```
+
+### Turn 49
+
+**User**
+
+```text
+- 외부 Mock Worker가 실제로 살아 있는지
+  - 현재 candidate 정보가 실제로 허용되는지 이게 가능하면 문제 없는거지?
+```
+
+**Assistant Update**
+
+```text
+남는 건 저장소 바깥 조건뿐입니다. 현재 검증한 범위와 외부 변수만 분리해서 짧게 정리하고 로그에 반영하겠습니다.
+```
+
 **User**
 
 ```text
@@ -2330,4 +2431,36 @@ Docker 쪽 반영까지 끝냈습니다.
 
 ```text
 POST /auth/issue-key 이건 mock 서버라 내가 손대는게 아니잖아
+```
+
+### Turn 50
+
+**User**
+
+```text
+현재 코드 자바로 바꿔서 증권사 외부 api 연동하는 구조로 수정해줘
+```
+
+**Assistant Update**
+
+```text
+현재 구현을 확인한 뒤, 자바 기반으로 전환할 범위와 외부 증권사 API 연동 지점을 먼저 파악하겠습니다. 코드 구조, 실행 방식, 문서 규약을 같이 확인하고 바로 수정에 들어가겠습니다.
+```
+
+**Assistant Update**
+
+```text
+구조를 보면 현재는 Kotlin 기반 비동기 이미지 작업 오케스트레이터입니다. 비동기 오케스트레이션 자체는 유지하고, 도메인을 증권 주문 작업으로 바꾸며, 외부 연동층은 BrokerageClient로 재구성하겠습니다.
+```
+
+**Assistant**
+
+```text
+Java 17 기준으로 메인 코드와 테스트를 다시 구성했고, 공개 API를 `/api/v1/stock-orders`로 교체했습니다. 주문 요청은 `brokerageCode`, `accountNumber`, `symbol`, `side`, `orderType`, `quantity`, `price`를 사용하며, 상태/결과/목록 조회는 비동기 job 모델을 그대로 유지합니다.
+
+외부 연동은 `RestBrokerageClient`로 분리해서 token 발급, 주문 제출, 주문 상태 조회, cached token reuse, `401` refresh retry, timeout/5xx 재시도 매핑을 넣었습니다. processor/recovery/cleanup 구조는 유지했고, read API에서는 계좌번호를 마스킹합니다.
+
+문서도 함께 갱신했습니다. `README`, `docs/REQUIREMENTS.md`, `docs/api/README.md`, `docs/runbook/DEBUG.md`, `docs/compat/README.md`, `docs/decisions/015-java-codebase-and-brokerage-order-integration.md`, `prompts/*`, `.env.example`, `docker/compose.yaml`를 새 구조 기준으로 바꿨습니다.
+
+검증은 `./gradlew test`와 `./gradlew test jacocoTestReport`로 마쳤습니다.
 ```
